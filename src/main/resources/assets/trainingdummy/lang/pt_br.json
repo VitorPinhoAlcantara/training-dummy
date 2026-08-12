@@ -1,0 +1,37 @@
+{
+  "item.trainingdummy.dummy_spawner": "Dummy de Treino",
+  "item.trainingdummy.dummy_spawner.tooltip.configure": "Clique direito com um Graveto para abrir o inventário dele",
+  "item.trainingdummy.dummy_spawner.tooltip.remove": "Bata com um Graveto para remover",
+  "item.trainingdummy.lure_bait": "Isca de Atração",
+  "item.trainingdummy.lure_bait.tooltip": "Coloque na mão principal de um dummy para atrair mobs próximos a atacá-lo",
+  "entity.trainingdummy.dummy": "Dummy de Treino",
+  "container.trainingdummy.dummy": "Dummy de Treino",
+  "gui.trainingdummy.curios": "Curios",
+  "gui.trainingdummy.inventory": "Inventário",
+
+  "trainingdummy.slot.head": "Capacete",
+  "trainingdummy.slot.chest": "Peitoral",
+  "trainingdummy.slot.legs": "Calças",
+  "trainingdummy.slot.feet": "Botas",
+  "trainingdummy.slot.mainhand": "Mão Principal",
+  "trainingdummy.slot.offhand": "Mão Secundária",
+
+  "trainingdummy.configuration.title": "Training Dummy - Config do Cliente",
+  "trainingdummy.configuration.section.trainingdummy.client.toml": "Exibição de Dano",
+  "trainingdummy.configuration.section.trainingdummy.client.toml.title": "Exibição de Dano",
+  "trainingdummy.configuration.hitResetSeconds": "Intervalo de reinício (segundos)",
+  "trainingdummy.configuration.hitResetSeconds.tooltip": "Cada acerto soma ao total corrente. Se passar esse tempo sem acertar, o próximo acerto começa um total novo em vez de somar ao anterior.",
+  "trainingdummy.configuration.displayDurationSeconds": "Duração da exibição (segundos)",
+  "trainingdummy.configuration.displayDurationSeconds.tooltip": "Por quanto tempo o dano fica visível na tela após o último acerto.",
+  "trainingdummy.configuration.displayLocation": "Local de exibição",
+  "trainingdummy.configuration.displayLocation.tooltip": "Onde mostrar o dano: na tela (HUD) ou no seu próprio chat.",
+  "trainingdummy.configuration.displayMetric": "Métrica de exibição",
+  "trainingdummy.configuration.displayMetric.tooltip": "Mostra o dano total da sequência atual, ou a taxa de dano por segundo.",
+  "trainingdummy.configuration.section.trainingdummy.common.toml": "Jogabilidade",
+  "trainingdummy.configuration.section.trainingdummy.common.toml.title": "Jogabilidade",
+  "trainingdummy.configuration.baitRadius": "Raio da isca de atração (blocos)",
+  "trainingdummy.configuration.baitRadius.tooltip": "De quão longe os mobs são atraídos para atacar um dummy segurando a isca.",
+
+  "trainingdummy.display.total": "%s de dano",
+  "trainingdummy.display.dps": "%s DPS"
+}

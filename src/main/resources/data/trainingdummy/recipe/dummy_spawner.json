@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": {
+      "item": "minecraft:armor_stand"
+    },
+    "H": {
+      "item": "minecraft:hay_block"
+    }
+  },
+  "pattern": [
+    "A",
+    "H"
+  ],
+  "result": {
+    "count": 1,
+    "id": "trainingdummy:dummy_spawner"
+  }
+}

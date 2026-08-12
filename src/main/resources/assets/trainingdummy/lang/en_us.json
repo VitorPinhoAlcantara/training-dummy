@@ -1,0 +1,37 @@
+{
+  "item.trainingdummy.dummy_spawner": "Training Dummy",
+  "item.trainingdummy.dummy_spawner.tooltip.configure": "Right-click with a Stick to open its inventory",
+  "item.trainingdummy.dummy_spawner.tooltip.remove": "Hit with a Stick to remove it",
+  "item.trainingdummy.lure_bait": "Lure Bait",
+  "item.trainingdummy.lure_bait.tooltip": "Hold in a dummy's main hand to lure nearby mobs into attacking it",
+  "entity.trainingdummy.dummy": "Training Dummy",
+  "container.trainingdummy.dummy": "Training Dummy",
+  "gui.trainingdummy.curios": "Curios",
+  "gui.trainingdummy.inventory": "Inventory",
+
+  "trainingdummy.slot.head": "Helmet",
+  "trainingdummy.slot.chest": "Chestplate",
+  "trainingdummy.slot.legs": "Leggings",
+  "trainingdummy.slot.feet": "Boots",
+  "trainingdummy.slot.mainhand": "Main Hand",
+  "trainingdummy.slot.offhand": "Off Hand",
+
+  "trainingdummy.configuration.title": "Training Dummy - Client Config",
+  "trainingdummy.configuration.section.trainingdummy.client.toml": "Damage Display",
+  "trainingdummy.configuration.section.trainingdummy.client.toml.title": "Damage Display",
+  "trainingdummy.configuration.hitResetSeconds": "Hit reset interval (seconds)",
+  "trainingdummy.configuration.hitResetSeconds.tooltip": "Every hit adds to a running total. If this many seconds pass without a hit, the next hit starts a fresh total instead of adding to the old one.",
+  "trainingdummy.configuration.displayDurationSeconds": "Display duration (seconds)",
+  "trainingdummy.configuration.displayDurationSeconds.tooltip": "How long the damage readout stays visible after the last hit.",
+  "trainingdummy.configuration.displayLocation": "Display location",
+  "trainingdummy.configuration.displayLocation.tooltip": "Where to show the damage readout: on screen (HUD) or in your own chat.",
+  "trainingdummy.configuration.displayMetric": "Display metric",
+  "trainingdummy.configuration.displayMetric.tooltip": "Show the total damage of the current streak, or its damage-per-second rate.",
+  "trainingdummy.configuration.section.trainingdummy.common.toml": "Gameplay",
+  "trainingdummy.configuration.section.trainingdummy.common.toml.title": "Gameplay",
+  "trainingdummy.configuration.baitRadius": "Lure bait radius (blocks)",
+  "trainingdummy.configuration.baitRadius.tooltip": "How far mobs are pulled from to attack a dummy holding the lure bait.",
+
+  "trainingdummy.display.total": "%s damage",
+  "trainingdummy.display.dps": "%s DPS"
+}
