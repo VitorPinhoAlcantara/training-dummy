@@ -27,7 +27,7 @@ public final class DummyCombatEvents {
         if (!(event.getSource().getEntity() instanceof ServerPlayer attacker)) {
             return;
         }
-        float amount = event.getNewDamage();
+        float amount = event.getInflictedDamage();
         if (amount > 0.0F) {
             PacketDistributor.sendToPlayer(attacker, new DummyDamagePayload(dummy.getId(), amount));
         }

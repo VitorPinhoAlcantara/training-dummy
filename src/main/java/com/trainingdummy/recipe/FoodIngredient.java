@@ -2,6 +2,7 @@ package com.trainingdummy.recipe;
 
 import com.mojang.serialization.MapCodec;
 import com.trainingdummy.registry.ModIngredientTypes;
+import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.Item;
@@ -26,10 +27,10 @@ public record FoodIngredient() implements ICustomIngredient {
     }
 
     @Override
-    public Stream<ItemStack> getItems() {
-        return BuiltInRegistries.ITEM.stream()
-                .map(Item::getDefaultInstance)
-                .filter(stack -> stack.has(DataComponents.FOOD));
+    public Stream<Holder<Item>> items() {
+        return BuiltInRegistries.ITEM.listElements()
+                .map(holder -> (Holder<Item>) holder)
+                .filter(holder -> holder.value().getDefaultInstance().has(DataComponents.FOOD));
     }
 
     @Override

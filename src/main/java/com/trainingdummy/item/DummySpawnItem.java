@@ -8,14 +8,16 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.stats.Stats;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 
-import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Places a {@link DummyEntity} on the clicked block, mirroring vanilla's ArmorStandItem.
@@ -27,11 +29,12 @@ public class DummySpawnItem extends Item {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
-        super.appendHoverText(stack, context, tooltip, flag);
-        tooltip.add(Component.translatable("item.trainingdummy.dummy_spawner.tooltip.configure")
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display,
+                                 Consumer<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, context, display, tooltip, flag);
+        tooltip.accept(Component.translatable("item.trainingdummy.dummy_spawner.tooltip.configure")
                 .withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.translatable("item.trainingdummy.dummy_spawner.tooltip.remove")
+        tooltip.accept(Component.translatable("item.trainingdummy.dummy_spawner.tooltip.remove")
                 .withStyle(ChatFormatting.GRAY));
     }
 
@@ -46,7 +49,7 @@ public class DummySpawnItem extends Item {
             return InteractionResult.SUCCESS;
         }
 
-        DummyEntity dummy = ModEntities.DUMMY.get().create(serverLevel);
+        DummyEntity dummy = ModEntities.DUMMY.get().create(serverLevel, EntitySpawnReason.SPAWN_ITEM_USE);
         if (dummy == null) {
             return InteractionResult.FAIL;
         }

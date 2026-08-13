@@ -5,7 +5,7 @@ import com.trainingdummy.entity.DummyEntity;
 import com.trainingdummy.registry.ModMenus;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -30,7 +30,7 @@ public class DummyMenu extends AbstractContainerMenu {
             EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET,
             EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND
     };
-    private static final ResourceLocation[] EQUIPMENT_ICONS = {
+    private static final Identifier[] EQUIPMENT_ICONS = {
             InventoryMenu.EMPTY_ARMOR_SLOT_HELMET, InventoryMenu.EMPTY_ARMOR_SLOT_CHESTPLATE,
             InventoryMenu.EMPTY_ARMOR_SLOT_LEGGINGS, InventoryMenu.EMPTY_ARMOR_SLOT_BOOTS,
             null, InventoryMenu.EMPTY_ARMOR_SLOT_SHIELD
@@ -95,7 +95,7 @@ public class DummyMenu extends AbstractContainerMenu {
             // armor slots only accept the matching piece.
             EquipmentSlot restrictTo = i >= HAND_SLOTS_START ? null : EQUIPMENT_ORDER[i];
             this.addSlot(new ArmorSlot(this.equipmentContainer, i, ARMOR_X, TOP_Y + i * SLOT_SIZE + gap,
-                    name, InventoryMenu.BLOCK_ATLAS, EQUIPMENT_ICONS[i], dummy, restrictTo));
+                    name, EQUIPMENT_ICONS[i], dummy, restrictTo));
         }
 
         if (this.curiosPageSlotCount > 0) {

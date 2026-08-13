@@ -33,7 +33,9 @@ public final class ClientDamageTracker {
         if (ClientConfig.DISPLAY_LOCATION.get() == ClientConfig.DisplayLocation.CHAT) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null) {
-                mc.gui.getChat().addMessage(formatMessage(currentMetricValue(now)));
+                // Purely client-side (never goes to the server) - same mechanism the client uses
+                // for its own local system messages.
+                mc.player.sendSystemMessage(formatMessage(currentMetricValue(now)));
             }
         }
     }

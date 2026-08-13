@@ -4,9 +4,9 @@ import com.trainingdummy.entity.DummyEntity;
 import com.trainingdummy.menu.DummyMenu;
 import com.trainingdummy.menu.SlotTooltip;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
@@ -42,7 +42,7 @@ public final class CuriosCompat {
             int pageEnd = pageStart + pageLimit;
             for (ICurioStacksHandler stacksHandler : handler.getCurios().values()) {
                 String identifier = stacksHandler.getIdentifier();
-                ResourceLocation icon = CuriosApi.getSlot(identifier, dummy.level())
+                Identifier icon = CuriosApi.getSlot(identifier, dummy.level())
                         .map(ISlotType::getIcon).orElse(null);
                 Component name = Component.translatable("curios.identifier." + identifier);
 
@@ -55,10 +55,7 @@ public final class CuriosCompat {
                     int col = local % columns;
                     int row = local / columns;
                     NamedCurioSlot slot = new NamedCurioSlot(stacksHandler.getStacks(), i,
-                            x + col * 18, y + row * 18, name);
-                    if (icon != null) {
-                        slot.setBackground(InventoryMenu.BLOCK_ATLAS, icon);
-                    }
+                            x + col * 18, y + row * 18, name, icon);
                     menu.addCurioSlot(slot);
                 }
             }
@@ -73,14 +70,14 @@ public final class CuriosCompat {
     }
 
     /** Drops every equipped curio into the world at the dummy's position (called when it's broken with a stick). */
-    public static void dropAll(DummyEntity dummy) {
+    public static void dropAll(DummyEntity dummy, ServerLevel level) {
         CuriosApi.getCuriosInventory(dummy).ifPresent(handler -> {
             for (ICurioStacksHandler stacksHandler : handler.getCurios().values()) {
                 IItemHandlerModifiable stacks = stacksHandler.getStacks();
                 for (int i = 0; i < stacks.getSlots(); i++) {
                     ItemStack stack = stacks.getStackInSlot(i);
                     if (!stack.isEmpty()) {
-                        dummy.spawnAtLocation(stack.copy());
+                        dummy.spawnAtLocation(level, stack.copy());
                         stacks.setStackInSlot(i, ItemStack.EMPTY);
                     }
                 }
@@ -98,10 +95,13 @@ public final class CuriosCompat {
     private static final class NamedCurioSlot extends SlotItemHandler implements SlotTooltip {
 
         private final Component tooltipName;
+        private final Identifier icon;
 
-        private NamedCurioSlot(IItemHandlerModifiable handler, int index, int x, int y, Component tooltipName) {
+        private NamedCurioSlot(IItemHandlerModifiable handler, int index, int x, int y, Component tooltipName,
+                                Identifier icon) {
             super(handler, index, x, y);
             this.tooltipName = tooltipName;
+            this.icon = icon;
         }
 
         private boolean indexStillValid() {
@@ -121,6 +121,11 @@ public final class CuriosCompat {
         @Override
         public boolean mayPickup(Player player) {
             return this.indexStillValid() && super.mayPickup(player);
+        }
+
+        @Override
+        public Identifier getNoItemIcon() {
+            return this.icon;
         }
 
         @Override

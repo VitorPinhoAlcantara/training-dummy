@@ -4,11 +4,9 @@ import com.trainingdummy.config.CommonConfig;
 import com.trainingdummy.curios.CuriosCompat;
 import com.trainingdummy.menu.DummyMenu;
 import com.trainingdummy.registry.ModItems;
-import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -29,6 +27,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.common.NeoForgeMod;
 
 import java.util.List;
 
@@ -38,18 +38,21 @@ import java.util.List;
  * model, so it needs no skin lookups and no server-side "fake account" machinery.
  *
  * <p>Health never drops (see {@link #actuallyHurt}); the only way to remove it from the world
- * is a melee hit with a vanilla stick (see {@link #hurt}). The actual damage-reporting packet is
- * sent from {@link com.trainingdummy.event.DummyCombatEvents} listening to
+ * is a melee hit with a vanilla stick (see {@link #hurtServer}). The actual damage-reporting
+ * packet is sent from {@link com.trainingdummy.event.DummyCombatEvents} listening to
  * {@code LivingDamageEvent.Post}, not from here - that event fires with the damage already
  * reduced by armor/shield/enchantments, whereas the {@code amount} parameters in this class are
  * still the raw pre-reduction values.
+ *
+ * <p>Unlike the 1.21.1 branch, this class does not keep its own hand/armor item lists or
+ * override getItemBySlot/setItemSlot/addAdditionalSaveData/readAdditionalSaveData - as of this
+ * Minecraft version LivingEntity has a built-in {@code EntityEquipment} store (same one
+ * ArmorStand now relies on) that already handles storage and persistence for every equipment
+ * slot, so there's nothing left for this class to do there.
  */
 public class DummyEntity extends LivingEntity {
 
     private static final int BAIT_SCAN_INTERVAL_TICKS = 20;
-
-    private final NonNullList<ItemStack> handItems = NonNullList.withSize(2, ItemStack.EMPTY);
-    private final NonNullList<ItemStack> armorItems = NonNullList.withSize(4, ItemStack.EMPTY);
 
     /**
      * Which "page" of the Curios grid its inventory screen should open on - server-side only,
@@ -68,27 +71,33 @@ public class DummyEntity extends LivingEntity {
     /**
      * Mirrors {@code Player.createAttributes()} (base living attributes + every attribute Player
      * adds on top) rather than just the handful this class actually reads itself. Curio/relic
-     * mods (Relics' Piglin Mask crashed us this way) assume any wearer has a full player-like
-     * attribute set and call {@code getAttribute(...)} on it without a null check - so a dummy
-     * missing an attribute they touch is a live crash, not just a shrug.
+     * mods (Relics' Piglin Mask crashed us this way on the 1.21.1 branch) assume any wearer has a
+     * full player-like attribute set and call {@code getAttribute(...)} on it without a null
+     * check - so a dummy missing an attribute they touch is a live crash, not just a shrug.
+     *
+     * <p>{@code LivingEntity.createLivingAttributes()} itself grew several attributes since
+     * 1.21.1 (armor, armor toughness and entity interaction range are now part of the base set
+     * rather than something Player/Mob add individually), so this only needs to add what
+     * {@code Player.createAttributes()} still adds on top of that base, plus this dummy's own
+     * overrides (max health, knockback resistance, movement speed).
      */
     public static AttributeSupplier.Builder createAttributes() {
         return LivingEntity.createLivingAttributes()
                 .add(Attributes.MAX_HEALTH, 1_000_000.0D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.0D)
-                .add(Attributes.ARMOR)
-                .add(Attributes.ARMOR_TOUGHNESS)
                 .add(Attributes.ATTACK_DAMAGE)
                 .add(Attributes.ATTACK_SPEED)
                 .add(Attributes.LUCK)
                 .add(Attributes.BLOCK_INTERACTION_RANGE)
-                .add(Attributes.ENTITY_INTERACTION_RANGE)
                 .add(Attributes.BLOCK_BREAK_SPEED)
                 .add(Attributes.SUBMERGED_MINING_SPEED)
                 .add(Attributes.SNEAKING_SPEED)
                 .add(Attributes.MINING_EFFICIENCY)
-                .add(Attributes.SWEEPING_DAMAGE_RATIO);
+                .add(Attributes.SWEEPING_DAMAGE_RATIO)
+                .add(Attributes.WAYPOINT_TRANSMIT_RANGE, 6.0E7)
+                .add(Attributes.WAYPOINT_RECEIVE_RANGE, 6.0E7)
+                .add(NeoForgeMod.CREATIVE_FLIGHT);
     }
 
     @Override
@@ -153,55 +162,47 @@ public class DummyEntity extends LivingEntity {
     }
 
     @Override
-    public boolean hurt(DamageSource source, float amount) {
-        if (!this.level().isClientSide && isStickHit(source)) {
-            this.level().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.ARMOR_STAND_BREAK,
+    public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
+        if (isStickHit(source)) {
+            level.playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.ARMOR_STAND_BREAK,
                     this.getSoundSource(), 1.0F, 1.0F);
-            this.dropAllEquipment();
+            this.dropAllEquipment(level);
             this.discard();
             return true;
         }
-        return super.hurt(source, amount);
+        return super.hurtServer(level, source, amount);
     }
 
     /**
      * Gives back everything it was wearing/holding (and any Curios), plus a spawner item for
      * itself - same courtesy vanilla's ArmorStand gives when broken. Each slot is cleared right
      * after dropping (rather than just handed a live reference into the equipment list) so there
-     * is no window where the entity is mid-removal with equipment still "equipped" - matches
-     * ArmorStand's own drop-then-clear pattern exactly.
+     * is no window where the entity is mid-removal with equipment still "equipped".
      */
-    private void dropAllEquipment() {
-        for (int i = 0; i < this.handItems.size(); i++) {
-            ItemStack stack = this.handItems.get(i);
+    private void dropAllEquipment(ServerLevel level) {
+        for (EquipmentSlot slot : EquipmentSlot.VALUES) {
+            ItemStack stack = this.getItemBySlot(slot);
             if (!stack.isEmpty()) {
-                this.spawnAtLocation(stack.copy());
-                this.handItems.set(i, ItemStack.EMPTY);
-            }
-        }
-        for (int i = 0; i < this.armorItems.size(); i++) {
-            ItemStack stack = this.armorItems.get(i);
-            if (!stack.isEmpty()) {
-                this.spawnAtLocation(stack.copy());
-                this.armorItems.set(i, ItemStack.EMPTY);
+                this.spawnAtLocation(level, stack.copy());
+                this.setItemSlot(slot, ItemStack.EMPTY);
             }
         }
         if (CuriosCompat.isLoaded()) {
-            CuriosCompat.dropAll(this);
+            CuriosCompat.dropAll(this, level);
         }
-        this.spawnAtLocation(new ItemStack(ModItems.DUMMY_SPAWNER.get()));
+        this.spawnAtLocation(level, new ItemStack(ModItems.DUMMY_SPAWNER.get()));
     }
 
     @Override
-    protected void actuallyHurt(DamageSource source, float amount) {
-        super.actuallyHurt(source, amount);
+    protected void actuallyHurt(ServerLevel level, DamageSource source, float amount) {
+        super.actuallyHurt(level, source, amount);
         if (this.getHealth() < this.getMaxHealth()) {
             this.setHealth(this.getMaxHealth());
         }
     }
 
     @Override
-    public InteractionResult interact(Player player, InteractionHand hand) {
+    public InteractionResult interact(Player player, InteractionHand hand, Vec3 location) {
         ItemStack held = player.getItemInHand(hand);
         if (held.is(Items.STICK) && !this.level().isClientSide) {
             this.openMenuFor(player);
@@ -217,7 +218,7 @@ public class DummyEntity extends LivingEntity {
             }
             return InteractionResult.SUCCESS;
         }
-        return super.interact(player, hand);
+        return super.interact(player, hand, location);
     }
 
     /**
@@ -249,14 +250,6 @@ public class DummyEntity extends LivingEntity {
     }
 
     @Override
-    public boolean canUseSlot(EquipmentSlot slot) {
-        // LivingEntity's default is `false`, which silently breaks
-        // getEquipmentSlotForItem() (it falls back to MAINHAND for every armor piece since the
-        // canUseSlot check inside it fails) - Mob/Player override this for the same reason.
-        return true;
-    }
-
-    @Override
     public boolean isPushable() {
         return false;
     }
@@ -267,78 +260,8 @@ public class DummyEntity extends LivingEntity {
     }
 
     @Override
-    public Iterable<ItemStack> getArmorSlots() {
-        return this.armorItems;
-    }
-
-    @Override
-    public ItemStack getItemBySlot(EquipmentSlot slot) {
-        return switch (slot.getType()) {
-            case HAND -> this.handItems.get(slot.getIndex());
-            case HUMANOID_ARMOR -> this.armorItems.get(slot.getIndex());
-            default -> ItemStack.EMPTY;
-        };
-    }
-
-    @Override
-    public void setItemSlot(EquipmentSlot slot, ItemStack stack) {
-        switch (slot.getType()) {
-            case HAND -> this.handItems.set(slot.getIndex(), stack);
-            case HUMANOID_ARMOR -> this.armorItems.set(slot.getIndex(), stack);
-            default -> {
-            }
-        }
-    }
-
-    @Override
     public HumanoidArm getMainArm() {
         return HumanoidArm.RIGHT;
-    }
-
-    @Override
-    public void addAdditionalSaveData(CompoundTag tag) {
-        super.addAdditionalSaveData(tag);
-        tag.put("HandItems", saveItemList(this.handItems, this.registryAccess()));
-        tag.put("ArmorItems", saveItemList(this.armorItems, this.registryAccess()));
-    }
-
-    @Override
-    public void readAdditionalSaveData(CompoundTag tag) {
-        super.readAdditionalSaveData(tag);
-        if (tag.contains("HandItems", 9)) {
-            loadItemList(tag.getList("HandItems", 10), this.handItems, this.registryAccess());
-        }
-        if (tag.contains("ArmorItems", 9)) {
-            loadItemList(tag.getList("ArmorItems", 10), this.armorItems, this.registryAccess());
-        }
-    }
-
-    private static ListTag saveItemList(NonNullList<ItemStack> items, net.minecraft.core.HolderLookup.Provider registries) {
-        ListTag list = new ListTag();
-        for (int i = 0; i < items.size(); i++) {
-            ItemStack stack = items.get(i);
-            if (!stack.isEmpty()) {
-                CompoundTag entry = new CompoundTag();
-                entry.putByte("Slot", (byte) i);
-                entry.put("Item", stack.save(registries, new CompoundTag()));
-                list.add(entry);
-            }
-        }
-        return list;
-    }
-
-    private static void loadItemList(ListTag list, NonNullList<ItemStack> items, net.minecraft.core.HolderLookup.Provider registries) {
-        int size = items.size();
-        for (int i = 0; i < size; i++) {
-            items.set(i, ItemStack.EMPTY);
-        }
-        for (int i = 0; i < list.size(); i++) {
-            CompoundTag entry = list.getCompound(i);
-            int slot = entry.getByte("Slot");
-            if (slot >= 0 && slot < size) {
-                items.set(slot, ItemStack.parseOptional(registries, entry.getCompound("Item")));
-            }
-        }
     }
 
     @Override

@@ -2,6 +2,9 @@ package com.trainingdummy.registry;
 
 import com.trainingdummy.TrainingDummyMod;
 import com.trainingdummy.entity.DummyEntity;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -17,7 +20,8 @@ public final class ModEntities {
                     .sized(0.6F, 1.95F)
                     .clientTrackingRange(10)
                     .fireImmune()
-                    .build(TrainingDummyMod.MODID + ":dummy"));
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE,
+                            Identifier.fromNamespaceAndPath(TrainingDummyMod.MODID, "dummy"))));
 
     private ModEntities() {
     }

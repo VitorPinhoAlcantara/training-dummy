@@ -1,12 +1,13 @@
 package com.trainingdummy.menu;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import org.jspecify.annotations.Nullable;
 
 /**
  * An equipment slot with a vanilla empty-slot icon (helmet/chestplate/.../shield silhouette,
@@ -20,21 +21,25 @@ public class ArmorSlot extends Slot implements SlotTooltip {
     private final Component tooltipName;
     private final LivingEntity wearer;
     private final EquipmentSlot restrictTo;
+    private final @Nullable Identifier icon;
 
     public ArmorSlot(Container container, int index, int x, int y, Component tooltipName,
-                      ResourceLocation atlas, ResourceLocation icon, LivingEntity wearer, EquipmentSlot restrictTo) {
+                      @Nullable Identifier icon, LivingEntity wearer, EquipmentSlot restrictTo) {
         super(container, index, x, y);
         this.tooltipName = tooltipName;
         this.wearer = wearer;
         this.restrictTo = restrictTo;
-        if (icon != null) {
-            this.setBackground(atlas, icon);
-        }
+        this.icon = icon;
     }
 
     @Override
     public boolean mayPlace(ItemStack stack) {
         return this.restrictTo == null || this.wearer.getEquipmentSlotForItem(stack) == this.restrictTo;
+    }
+
+    @Override
+    public @Nullable Identifier getNoItemIcon() {
+        return this.icon;
     }
 
     @Override
