@@ -1,4 +1,6 @@
 {
+  "itemGroup.trainingdummy": "Training Dummy",
+
   "item.trainingdummy.dummy_spawner": "Training Dummy",
   "item.trainingdummy.dummy_spawner.tooltip.configure": "Right-click with a Stick to open its inventory",
   "item.trainingdummy.dummy_spawner.tooltip.remove": "Hit with a Stick to remove it",

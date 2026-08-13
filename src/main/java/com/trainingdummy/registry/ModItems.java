@@ -2,6 +2,7 @@ package com.trainingdummy.registry;
 
 import com.trainingdummy.TrainingDummyMod;
 import com.trainingdummy.item.DummySpawnItem;
+import com.trainingdummy.item.LureBaitItem;
 import net.minecraft.world.item.Item;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -14,7 +15,7 @@ public final class ModItems {
             () -> new DummySpawnItem(new Item.Properties().stacksTo(16)));
 
     public static final DeferredItem<Item> LURE_BAIT = ITEMS.register("lure_bait",
-            () -> new Item(new Item.Properties().stacksTo(16)));
+            () -> new LureBaitItem(new Item.Properties().stacksTo(16)));
 
     private ModItems() {
     }

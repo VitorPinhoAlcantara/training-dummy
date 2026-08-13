@@ -80,7 +80,7 @@ public final class CuriosCompat {
                 for (int i = 0; i < stacks.getSlots(); i++) {
                     ItemStack stack = stacks.getStackInSlot(i);
                     if (!stack.isEmpty()) {
-                        dummy.spawnAtLocation(stack);
+                        dummy.spawnAtLocation(stack.copy());
                         stacks.setStackInSlot(i, ItemStack.EMPTY);
                     }
                 }

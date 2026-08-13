@@ -1,4 +1,6 @@
 {
+  "itemGroup.trainingdummy": "Training Dummy",
+
   "item.trainingdummy.dummy_spawner": "Dummy de Treino",
   "item.trainingdummy.dummy_spawner.tooltip.configure": "Clique direito com um Graveto para abrir o inventário dele",
   "item.trainingdummy.dummy_spawner.tooltip.remove": "Bata com um Graveto para remover",

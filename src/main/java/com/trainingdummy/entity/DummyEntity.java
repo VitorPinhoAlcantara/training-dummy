@@ -20,6 +20,9 @@ import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.monster.piglin.AbstractPiglin;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -62,13 +65,30 @@ public class DummyEntity extends LivingEntity {
         this.setNoGravity(false);
     }
 
+    /**
+     * Mirrors {@code Player.createAttributes()} (base living attributes + every attribute Player
+     * adds on top) rather than just the handful this class actually reads itself. Curio/relic
+     * mods (Relics' Piglin Mask crashed us this way) assume any wearer has a full player-like
+     * attribute set and call {@code getAttribute(...)} on it without a null check - so a dummy
+     * missing an attribute they touch is a live crash, not just a shrug.
+     */
     public static AttributeSupplier.Builder createAttributes() {
         return LivingEntity.createLivingAttributes()
                 .add(Attributes.MAX_HEALTH, 1_000_000.0D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.0D)
                 .add(Attributes.ARMOR)
-                .add(Attributes.ARMOR_TOUGHNESS);
+                .add(Attributes.ARMOR_TOUGHNESS)
+                .add(Attributes.ATTACK_DAMAGE)
+                .add(Attributes.ATTACK_SPEED)
+                .add(Attributes.LUCK)
+                .add(Attributes.BLOCK_INTERACTION_RANGE)
+                .add(Attributes.ENTITY_INTERACTION_RANGE)
+                .add(Attributes.BLOCK_BREAK_SPEED)
+                .add(Attributes.SUBMERGED_MINING_SPEED)
+                .add(Attributes.SNEAKING_SPEED)
+                .add(Attributes.MINING_EFFICIENCY)
+                .add(Attributes.SWEEPING_DAMAGE_RATIO);
     }
 
     @Override
@@ -91,16 +111,39 @@ public class DummyEntity extends LivingEntity {
         }
     }
 
-    /** Makes any mob within range that can see this dummy (and isn't already busy fighting something) attack it. */
+    /**
+     * Makes any hostile mob within range that can see this dummy (and isn't already busy fighting
+     * something) attack it. Only actually-hostile mobs ({@link Enemy}, e.g. zombies/skeletons/
+     * creepers) - wolves, foxes and bees are {@code Mob}s too but they're neutral/passive by
+     * nature and shouldn't be forced to attack just because the bait is out.
+     */
     private void lureNearbyMobs() {
         double radius = CommonConfig.BAIT_RADIUS.get();
         AABB area = this.getBoundingBox().inflate(radius);
         // The dummy is a LivingEntity, not a Mob, so it can never show up in this list itself.
-        List<Mob> nearby = this.level().getEntitiesOfClass(Mob.class, area, Mob::isAlive);
+        List<Mob> nearby = this.level().getEntitiesOfClass(Mob.class, area,
+                mob -> mob.isAlive() && mob instanceof Enemy);
         for (Mob mob : nearby) {
             LivingEntity currentTarget = mob.getTarget();
             if ((currentTarget == null || !currentTarget.isAlive()) && mob.hasLineOfSight(this)) {
                 mob.setTarget(this);
+                // Older goal-based mobs (zombies, skeletons, spiders...) act on setTarget() alone.
+                // Newer brain-based mobs (piglins, breezes, wardens...) decide who to fight from
+                // this memory instead and mostly ignore the legacy target field, so both need to
+                // be set for the bait to work on the full mob roster - harmless no-op for mobs
+                // that don't use their brain for combat. (Phantoms are a known exception either
+                // way - their attack goal is hard-coded to only ever target an actual Player, so
+                // nothing short of replacing that vanilla goal would bait them.)
+                mob.getBrain().setMemory(MemoryModuleType.ATTACK_TARGET, this);
+            }
+            // Piglins/Piglin Brutes re-validate ATTACK_TARGET every tick against their own
+            // whitelist (nearest visible player/hoglin/zombified ally) and erase anything else
+            // immediately - that's the "targets for an instant then gives up" loop. The only
+            // target they'll actually keep chasing outside that whitelist is whoever they're
+            // "angry at", the same memory vanilla sets when they get hurt by something, so we
+            // set that directly (with the same 600-tick/30s expiry vanilla uses) to bypass it.
+            if (mob instanceof AbstractPiglin) {
+                mob.getBrain().setMemoryWithExpiry(MemoryModuleType.ANGRY_AT, this.getUUID(), 600L);
             }
         }
     }
@@ -121,21 +164,32 @@ public class DummyEntity extends LivingEntity {
         return super.hurt(source, amount);
     }
 
-    /** Gives back everything it was wearing/holding (and any Curios) - same courtesy vanilla's ArmorStand gives. */
+    /**
+     * Gives back everything it was wearing/holding (and any Curios), plus a spawner item for
+     * itself - same courtesy vanilla's ArmorStand gives when broken. Each slot is cleared right
+     * after dropping (rather than just handed a live reference into the equipment list) so there
+     * is no window where the entity is mid-removal with equipment still "equipped" - matches
+     * ArmorStand's own drop-then-clear pattern exactly.
+     */
     private void dropAllEquipment() {
-        for (ItemStack stack : this.handItems) {
+        for (int i = 0; i < this.handItems.size(); i++) {
+            ItemStack stack = this.handItems.get(i);
             if (!stack.isEmpty()) {
-                this.spawnAtLocation(stack);
+                this.spawnAtLocation(stack.copy());
+                this.handItems.set(i, ItemStack.EMPTY);
             }
         }
-        for (ItemStack stack : this.armorItems) {
+        for (int i = 0; i < this.armorItems.size(); i++) {
+            ItemStack stack = this.armorItems.get(i);
             if (!stack.isEmpty()) {
-                this.spawnAtLocation(stack);
+                this.spawnAtLocation(stack.copy());
+                this.armorItems.set(i, ItemStack.EMPTY);
             }
         }
         if (CuriosCompat.isLoaded()) {
             CuriosCompat.dropAll(this);
         }
+        this.spawnAtLocation(new ItemStack(ModItems.DUMMY_SPAWNER.get()));
     }
 
     @Override
@@ -289,7 +343,11 @@ public class DummyEntity extends LivingEntity {
 
     @Override
     public boolean canBeSeenAsEnemy() {
-        return false;
+        // Was `false` (copied from ArmorStand, which is never meant to be attacked). That broke
+        // the lure bait: several hostile mobs' own targeting AI re-checks canBeSeenAsEnemy() every
+        // tick and drops a target that fails it, so only mobs with simpler AI kept attacking.
+        // Which mobs the bait targets at all is filtered separately in lureNearbyMobs().
+        return true;
     }
 
     @Override

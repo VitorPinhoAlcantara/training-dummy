@@ -156,7 +156,17 @@ public class DummyMenu extends AbstractContainerMenu {
                 return ItemStack.EMPTY;
             }
         } else {
-            if (!this.moveItemStackTo(original, 0, dummySlotCount, false)) {
+            // Shift-clicking from the player's inventory: try Curios first (a ring shouldn't end
+            // up in the dummy's hand just because hands are unrestricted and come first in slot
+            // order), then armor, then finally the hands as a catch-all for anything else.
+            int armorStart = 0;
+            int handsStart = HAND_SLOTS_START;
+            int curiosStart = EQUIPMENT_ORDER.length;
+            int curiosEnd = curiosStart + this.curiosPageSlotCount;
+            boolean moved = (this.curiosPageSlotCount > 0 && this.moveItemStackTo(original, curiosStart, curiosEnd, false))
+                    || this.moveItemStackTo(original, armorStart, handsStart, false)
+                    || this.moveItemStackTo(original, handsStart, curiosStart, false);
+            if (!moved) {
                 return ItemStack.EMPTY;
             }
         }
