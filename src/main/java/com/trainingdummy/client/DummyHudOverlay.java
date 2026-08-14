@@ -1,6 +1,7 @@
 package com.trainingdummy.client;
 
 import com.trainingdummy.TrainingDummyMod;
+import com.trainingdummy.config.ClientConfig;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -19,12 +20,12 @@ public final class DummyHudOverlay {
             int screenHeight = mc.getWindow().getGuiScaledHeight();
             int textWidth = mc.font.width(message);
 
-            int x = (screenWidth - textWidth) / 2;
-            // A bit above the XP bar (which itself sits right above the hotbar).
-            int y = screenHeight - 55;
+            int x = (screenWidth - textWidth) / 2 + ClientConfig.DISPLAY_OFFSET_X.get();
+            int y = screenHeight - ClientConfig.DISPLAY_OFFSET_Y.get();
+            int color = ClientConfig.displayColorArgb();
 
             graphics.drawString(mc.font, message, x + 1, y + 1, 0x000000, false);
-            graphics.drawString(mc.font, message, x, y, 0xFFFF5555, false);
+            graphics.drawString(mc.font, message, x, y, color, false);
         });
     }
 

@@ -54,6 +54,15 @@ public class DummyMenu extends AbstractContainerMenu {
     public static final int PLAYER_INV_X = MARGIN;
     public static final int MIN_CONTENT_WIDTH = PLAYER_INV_X + 9 * SLOT_SIZE + MARGIN;
 
+    /**
+     * Row of per-dummy settings (display metric, display location, max health) below the curio
+     * grid/armor paperdoll, whichever is taller. Positioned relative to {@code MAX_CURIOS_ROWS}
+     * rather than however many curio rows this particular dummy actually has, so it doesn't jump
+     * around depending on how many accessory slots are equipped/available.
+     */
+    public static final int CONTROLS_Y = TOP_Y + ARMOR_HEIGHT + 6;
+    public static final int CONTROLS_HEIGHT = 40;
+
     public final int curiosTotalSlotCount;
     public final int curiosPageSlotCount;
     public final int curiosTotalPages;
@@ -85,8 +94,6 @@ public class DummyMenu extends AbstractContainerMenu {
 
         int pageStart = this.curiosPage * CURIOS_PAGE_CAPACITY;
         this.curiosPageSlotCount = Math.max(0, Math.min(CURIOS_PAGE_CAPACITY, this.curiosTotalSlotCount - pageStart));
-        int pageRows = this.curiosPageSlotCount == 0 ? 0
-                : (this.curiosPageSlotCount + CURIOS_COLUMNS - 1) / CURIOS_COLUMNS;
 
         for (int i = 0; i < EQUIPMENT_ORDER.length; i++) {
             int gap = i >= HAND_SLOTS_START ? ARMOR_OFFHAND_GAP : 0;
@@ -102,8 +109,7 @@ public class DummyMenu extends AbstractContainerMenu {
             CuriosCompat.addCurioSlots(this, dummy, CURIOS_X, TOP_Y, CURIOS_COLUMNS, pageStart, this.curiosPageSlotCount);
         }
 
-        int contentHeight = Math.max(ARMOR_HEIGHT, pageRows * SLOT_SIZE);
-        this.playerInvY = TOP_Y + contentHeight + 4 + 14;
+        this.playerInvY = CONTROLS_Y + CONTROLS_HEIGHT + 14;
 
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {

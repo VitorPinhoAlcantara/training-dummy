@@ -1,10 +1,13 @@
 package com.trainingdummy.client;
 
+import com.trainingdummy.config.ClientConfig;
 import com.trainingdummy.menu.DummyMenu;
 import com.trainingdummy.menu.SlotTooltip;
 import com.trainingdummy.network.DummyCuriosPagePayload;
+import com.trainingdummy.network.DummySetMaxHealthPayload;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -23,6 +26,8 @@ public class DummyScreen extends AbstractContainerScreen<DummyMenu> {
     private static final int SHADOW = 0xFF555555;
     private static final int SLOT_WELL = 0xFF8B8B8B;
     private static final int LABEL_COLOR = 0xFF404040;
+
+    private EditBox maxHealthBox;
 
     public DummyScreen(DummyMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
@@ -45,6 +50,59 @@ public class DummyScreen extends AbstractContainerScreen<DummyMenu> {
             this.addRenderableWidget(Button.builder(Component.literal(">"), b -> this.requestPage(this.menu.curiosPage + 1))
                     .bounds(rightEdge - 14, rowY, 14, 12).build());
         }
+
+        int controlsX = this.leftPos + DummyMenu.ARMOR_X;
+        int controlsY = this.topPos + DummyMenu.CONTROLS_Y;
+
+        this.addRenderableWidget(Button.builder(metricLabel(), b -> {
+            ClientConfig.DisplayMetric next = ClientConfig.DISPLAY_METRIC.get() == ClientConfig.DisplayMetric.TOTAL
+                    ? ClientConfig.DisplayMetric.DPS : ClientConfig.DisplayMetric.TOTAL;
+            ClientConfig.DISPLAY_METRIC.set(next);
+            b.setMessage(metricLabel());
+        }).bounds(controlsX, controlsY, 80, 16).build());
+
+        this.addRenderableWidget(Button.builder(locationLabel(), b -> {
+            ClientConfig.DisplayLocation next = ClientConfig.DISPLAY_LOCATION.get() == ClientConfig.DisplayLocation.CHAT
+                    ? ClientConfig.DisplayLocation.SCREEN : ClientConfig.DisplayLocation.CHAT;
+            ClientConfig.DISPLAY_LOCATION.set(next);
+            b.setMessage(locationLabel());
+        }).bounds(controlsX + 84, controlsY, 80, 16).build());
+
+        int fieldY = controlsY + 20;
+        this.maxHealthBox = new EditBox(this.font, controlsX, fieldY, 100, 16,
+                Component.translatable("trainingdummy.gui.maxHealth"));
+        this.maxHealthBox.setMaxLength(15);
+        this.maxHealthBox.setFilter(s -> s.isEmpty() || s.matches("[0-9]*\\.?[0-9]*"));
+        this.maxHealthBox.setValue(String.valueOf((long) this.menu.getDummy().getMaxHealth()));
+        this.addRenderableWidget(this.maxHealthBox);
+
+        this.addRenderableWidget(Button.builder(Component.translatable("trainingdummy.gui.maxHealth.set"),
+                b -> this.submitMaxHealth()).bounds(controlsX + 104, fieldY, 60, 16).build());
+    }
+
+    private static Component metricLabel() {
+        return Component.translatable(ClientConfig.DISPLAY_METRIC.get() == ClientConfig.DisplayMetric.DPS
+                ? "trainingdummy.display.dps.name" : "trainingdummy.display.total.name");
+    }
+
+    private static Component locationLabel() {
+        return Component.translatable(ClientConfig.DISPLAY_LOCATION.get() == ClientConfig.DisplayLocation.CHAT
+                ? "trainingdummy.gui.location.chat" : "trainingdummy.gui.location.screen");
+    }
+
+    /** Blank or 0 clears the per-dummy override, going back to the global config default - see network.DummySetMaxHealthPayload. */
+    private void submitMaxHealth() {
+        String text = this.maxHealthBox.getValue().trim();
+        double value = text.isEmpty() ? 0.0D : parseOrZero(text);
+        PacketDistributor.sendToServer(new DummySetMaxHealthPayload(this.menu.getDummy().getId(), value));
+    }
+
+    private static double parseOrZero(String text) {
+        try {
+            return Double.parseDouble(text);
+        } catch (NumberFormatException e) {
+            return 0.0D;
+        }
     }
 
     /** Curios slot positions are fixed once built, so a page change reopens the menu on that page - see DummyEntity#openMenuFor. */
@@ -66,11 +124,9 @@ public class DummyScreen extends AbstractContainerScreen<DummyMenu> {
             drawSlotWell(graphics, x + slot.x - 1, y + slot.y - 1);
         }
 
-        if (this.menu.curiosTotalSlotCount > 0) {
-            Component label = this.menu.curiosTotalPages > 1
-                    ? Component.translatable("gui.trainingdummy.curios").append(" (" + (this.menu.curiosPage + 1) + "/" + this.menu.curiosTotalPages + ")")
-                    : Component.translatable("gui.trainingdummy.curios");
-            graphics.drawString(this.font, label, x + DummyMenu.CURIOS_X, y + DummyMenu.TOP_Y - 10, LABEL_COLOR, false);
+        if (this.menu.curiosTotalPages > 1) {
+            String pageText = "(" + (this.menu.curiosPage + 1) + "/" + this.menu.curiosTotalPages + ")";
+            graphics.drawString(this.font, pageText, x + DummyMenu.CURIOS_X, y + DummyMenu.TOP_Y - 10, LABEL_COLOR, false);
         }
     }
 

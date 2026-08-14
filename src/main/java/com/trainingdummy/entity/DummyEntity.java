@@ -59,10 +59,47 @@ public class DummyEntity extends LivingEntity {
      */
     private int curiosPage = 0;
 
+    /**
+     * Per-dummy override of {@link CommonConfig#MAX_HEALTH}, set from the inventory screen's
+     * health field (see network.DummySetMaxHealthPayload) - a negative value means "no override,
+     * use the global config default".
+     */
+    private double maxHealthOverride = -1.0D;
+
     public DummyEntity(EntityType<? extends DummyEntity> type, Level level) {
         super(type, level);
         this.noPhysics = false;
         this.setNoGravity(false);
+        this.applyMaxHealth();
+    }
+
+    /**
+     * Applied here (rather than baked into createAttributes()) since that method runs once at
+     * mod-construction time, before configs are guaranteed to be loaded - reading the config
+     * per-instance, once an entity actually exists, is always safe and also means changing
+     * maxHealth takes effect for newly spawned dummies without needing a restart.
+     */
+    private void applyMaxHealth() {
+        net.minecraft.world.entity.ai.attributes.AttributeInstance maxHealthAttribute = this.getAttribute(Attributes.MAX_HEALTH);
+        if (maxHealthAttribute != null) {
+            maxHealthAttribute.setBaseValue(this.effectiveMaxHealthConfig());
+        }
+        this.setHealth(this.getMaxHealth());
+    }
+
+    private double effectiveMaxHealthConfig() {
+        return this.maxHealthOverride > 0.0D ? this.maxHealthOverride : CommonConfig.MAX_HEALTH.get();
+    }
+
+    /** -1 if this dummy is using the global {@link CommonConfig#MAX_HEALTH} default, otherwise its own override. */
+    public double getMaxHealthOverride() {
+        return this.maxHealthOverride;
+    }
+
+    /** Same range as {@link CommonConfig#MAX_HEALTH}; a value {@code <= 0} clears the override back to the global default. */
+    public void setMaxHealthOverride(double value) {
+        this.maxHealthOverride = value > 0.0D ? Math.min(value, 1_000_000_000.0D) : -1.0D;
+        this.applyMaxHealth();
     }
 
     /**
@@ -300,6 +337,9 @@ public class DummyEntity extends LivingEntity {
         super.addAdditionalSaveData(tag);
         tag.put("HandItems", saveItemList(this.handItems, this.registryAccess()));
         tag.put("ArmorItems", saveItemList(this.armorItems, this.registryAccess()));
+        if (this.maxHealthOverride > 0.0D) {
+            tag.putDouble("MaxHealthOverride", this.maxHealthOverride);
+        }
     }
 
     @Override
@@ -311,6 +351,9 @@ public class DummyEntity extends LivingEntity {
         if (tag.contains("ArmorItems", 9)) {
             loadItemList(tag.getList("ArmorItems", 10), this.armorItems, this.registryAccess());
         }
+        // getDouble() already returns 0.0 (treated as "no override") when the tag is absent.
+        this.maxHealthOverride = tag.getDouble("MaxHealthOverride");
+        this.applyMaxHealth();
     }
 
     private static ListTag saveItemList(NonNullList<ItemStack> items, net.minecraft.core.HolderLookup.Provider registries) {
@@ -343,11 +386,21 @@ public class DummyEntity extends LivingEntity {
 
     @Override
     public boolean canBeSeenAsEnemy() {
-        // Was `false` (copied from ArmorStand, which is never meant to be attacked). That broke
-        // the lure bait: several hostile mobs' own targeting AI re-checks canBeSeenAsEnemy() every
-        // tick and drops a target that fails it, so only mobs with simpler AI kept attacking.
-        // Which mobs the bait targets at all is filtered separately in lureNearbyMobs().
-        return true;
+        // Was hardcoded `true` at one point (having been hardcoded `false`, copied from
+        // ArmorStand, before that - which broke the lure bait since several hostile mobs'
+        // targeting AI drops a target that fails this check). Hardcoding it to `true`
+        // unconditionally went too far the other way: it made the dummy a valid target forever,
+        // even after being discarded or with the bait long gone.
+        //
+        // Gating on "holding bait" isn't just for correctness after death - it's also what makes
+        // mobs let go the instant the bait is pulled back out, for free. Every hostile mob's own
+        // AI (goal-based and brain-based alike) already re-reads this on essentially every tick
+        // to decide whether to keep its current target - Mob#getTarget() itself returns null the
+        // moment canAttack(target) fails, which folds in canBeSeenAsEnemy() - so flipping this to
+        // false makes the whole mob roster drop the dummy on their own via their own existing
+        // target-revalidation, without this class having to track or reach into any of them
+        // itself. (Symmetric: putting the bait back doesn't need a reason to fail either.)
+        return super.canBeSeenAsEnemy() && this.getMainHandItem().is(ModItems.LURE_BAIT.get());
     }
 
     @Override

@@ -2,6 +2,21 @@
 
 All notable changes to this mod are documented here.
 
+## [1.2] - 2026-08-14
+
+### Novidades
+- Vida máxima do dummy agora é configurável (inclusive por dummy individual, direto no inventário dele).
+- Texto de dano na tela agora tem posição, cor e formatação (separador de milhar) configuráveis.
+- Botões no inventário do dummy pra trocar rapidamente entre dano Total/DPS e exibição em Chat/Tela, sem precisar mexer em arquivo de config.
+
+### Correções
+- Mobs agora realmente param de atacar quando você tira a isca da mão do dummy.
+- O número de dano por segundo (DPS) não fica mais oscilando sem parar na tela — agora só atualiza quando um novo acerto acontece.
+
+### Mudanças
+- Vida máxima padrão agora é 20 (antes era um valor bem alto).
+- Exibição de dano por padrão agora é no chat (antes era na tela).
+
 ## [1.1.0] - 2026-08-13
 
 ### Fixed

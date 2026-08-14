@@ -4,6 +4,8 @@ import com.trainingdummy.config.ClientConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -15,9 +17,27 @@ import java.util.Optional;
  */
 public final class ClientDamageTracker {
 
+    /** "." for the thousands/millions/... groups, "," for the decimal - e.g. 1.234.567,8. */
+    private static final DecimalFormat NUMBER_FORMAT;
+
+    static {
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.ROOT);
+        symbols.setGroupingSeparator('.');
+        symbols.setDecimalSeparator(',');
+        NUMBER_FORMAT = new DecimalFormat("#,##0.0", symbols);
+    }
+
     private static float streakTotal = 0.0F;
     private static long streakStartTick = Long.MIN_VALUE;
     private static long lastHitTick = Long.MIN_VALUE;
+
+    /**
+     * Frozen at the moment of the last hit, rather than recomputed every frame - DPS in
+     * particular is total/elapsed-time, so recalculating it every single frame while nothing new
+     * happens made it drift up and down continuously and was unreadable. It only needs to change
+     * when there's actually a new hit to reflect.
+     */
+    private static Component lastMessage = null;
 
     public static void recordHit(int dummyId, float amount) {
         long now = currentTick();
@@ -29,11 +49,12 @@ public final class ClientDamageTracker {
         }
         streakTotal += amount;
         lastHitTick = now;
+        lastMessage = formatMessage(currentMetricValue(now));
 
         if (ClientConfig.DISPLAY_LOCATION.get() == ClientConfig.DisplayLocation.CHAT) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null) {
-                mc.gui.getChat().addMessage(formatMessage(currentMetricValue(now)));
+                mc.gui.getChat().addMessage(lastMessage);
             }
         }
     }
@@ -48,7 +69,7 @@ public final class ClientDamageTracker {
         if (now - lastHitTick > displayDurationTicks) {
             return Optional.empty();
         }
-        return Optional.of(formatMessage(currentMetricValue(now)));
+        return Optional.ofNullable(lastMessage);
     }
 
     private static double currentMetricValue(long now) {
@@ -60,7 +81,7 @@ public final class ClientDamageTracker {
     }
 
     private static Component formatMessage(double value) {
-        String formatted = String.format(Locale.ROOT, "%.1f", value);
+        String formatted = NUMBER_FORMAT.format(value);
         String key = ClientConfig.DISPLAY_METRIC.get() == ClientConfig.DisplayMetric.DPS
                 ? "trainingdummy.display.dps"
                 : "trainingdummy.display.total";
