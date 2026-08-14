@@ -31,6 +31,14 @@ public final class ClientDamageTracker {
     private static long streakStartTick = Long.MIN_VALUE;
     private static long lastHitTick = Long.MIN_VALUE;
 
+    /**
+     * Frozen at the moment of the last hit, rather than recomputed every frame - DPS in
+     * particular is total/elapsed-time, so recalculating it every single frame while nothing new
+     * happens made it drift up and down continuously and was unreadable. It only needs to change
+     * when there's actually a new hit to reflect.
+     */
+    private static Component lastMessage = null;
+
     public static void recordHit(int dummyId, float amount) {
         long now = currentTick();
         double resetTicks = ClientConfig.HIT_RESET_SECONDS.get() * 20.0D;
@@ -41,13 +49,14 @@ public final class ClientDamageTracker {
         }
         streakTotal += amount;
         lastHitTick = now;
+        lastMessage = formatMessage(currentMetricValue(now));
 
         if (ClientConfig.DISPLAY_LOCATION.get() == ClientConfig.DisplayLocation.CHAT) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null) {
                 // Purely client-side (never goes to the server) - same mechanism the client uses
                 // for its own local system messages.
-                mc.player.sendSystemMessage(formatMessage(currentMetricValue(now)));
+                mc.player.sendSystemMessage(lastMessage);
             }
         }
     }
@@ -62,7 +71,7 @@ public final class ClientDamageTracker {
         if (now - lastHitTick > displayDurationTicks) {
             return Optional.empty();
         }
-        return Optional.of(formatMessage(currentMetricValue(now)));
+        return Optional.ofNullable(lastMessage);
     }
 
     private static double currentMetricValue(long now) {
