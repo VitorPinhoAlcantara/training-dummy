@@ -8,8 +8,11 @@
   "item.trainingdummy.lure_bait.tooltip": "Coloque na mão principal de um dummy para atrair mobs próximos a atacá-lo",
   "entity.trainingdummy.dummy": "Dummy de Treino",
   "container.trainingdummy.dummy": "Dummy de Treino",
-  "gui.trainingdummy.curios": "Curios",
   "gui.trainingdummy.inventory": "Inventário",
+  "trainingdummy.gui.location.chat": "Chat",
+  "trainingdummy.gui.location.screen": "Tela",
+  "trainingdummy.gui.maxHealth": "Vida Máxima",
+  "trainingdummy.gui.maxHealth.set": "Definir",
 
   "trainingdummy.slot.head": "Capacete",
   "trainingdummy.slot.chest": "Peitoral",
@@ -29,11 +32,21 @@
   "trainingdummy.configuration.displayLocation.tooltip": "Onde mostrar o dano: na tela (HUD) ou no seu próprio chat.",
   "trainingdummy.configuration.displayMetric": "Métrica de exibição",
   "trainingdummy.configuration.displayMetric.tooltip": "Mostra o dano total da sequência atual, ou a taxa de dano por segundo.",
+  "trainingdummy.configuration.displayOffsetX": "Deslocamento X (pixels)",
+  "trainingdummy.configuration.displayOffsetX.tooltip": "Deslocamento horizontal, em pixels, a partir do centro da tela (negativo = esquerda, positivo = direita). Só afeta a exibição na tela.",
+  "trainingdummy.configuration.displayOffsetY": "Deslocamento Y (pixels)",
+  "trainingdummy.configuration.displayOffsetY.tooltip": "Deslocamento vertical, em pixels, a partir da base da tela. Só afeta a exibição na tela.",
+  "trainingdummy.configuration.displayColor": "Cor da exibição (hex)",
+  "trainingdummy.configuration.displayColor.tooltip": "Cor do texto como hex RRGGBB (6 dígitos) ou AARRGGBB (8 dígitos), sem o #. Só afeta a exibição na tela.",
   "trainingdummy.configuration.section.trainingdummy.common.toml": "Jogabilidade",
   "trainingdummy.configuration.section.trainingdummy.common.toml.title": "Jogabilidade",
   "trainingdummy.configuration.baitRadius": "Raio da isca de atração (blocos)",
   "trainingdummy.configuration.baitRadius.tooltip": "De quão longe os mobs são atraídos para atacar um dummy segurando a isca.",
+  "trainingdummy.configuration.maxHealth": "Vida máxima",
+  "trainingdummy.configuration.maxHealth.tooltip": "Vida máxima do dummy. Ela é sempre mantida no máximo a cada tick independente desse valor, então mesmo 1 nunca deixa um acerto matá-lo - bater com um Graveto continua sendo o único jeito de remover um.",
 
   "trainingdummy.display.total": "%s de dano",
-  "trainingdummy.display.dps": "%s DPS"
+  "trainingdummy.display.dps": "%s DPS",
+  "trainingdummy.display.total.name": "Total",
+  "trainingdummy.display.dps.name": "DPS"
 }

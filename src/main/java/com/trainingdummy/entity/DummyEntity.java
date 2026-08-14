@@ -17,6 +17,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.monster.Enemy;
@@ -26,6 +27,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForgeMod;
@@ -62,10 +65,47 @@ public class DummyEntity extends LivingEntity {
      */
     private int curiosPage = 0;
 
+    /**
+     * Per-dummy override of {@link CommonConfig#MAX_HEALTH}, set from the inventory screen's
+     * health field (see network.DummySetMaxHealthPayload) - a negative value means "no override,
+     * use the global config default".
+     */
+    private double maxHealthOverride = -1.0D;
+
     public DummyEntity(EntityType<? extends DummyEntity> type, Level level) {
         super(type, level);
         this.noPhysics = false;
         this.setNoGravity(false);
+        this.applyMaxHealth();
+    }
+
+    /**
+     * Applied here (rather than baked into createAttributes()) since that method runs once at
+     * mod-construction time, before configs are guaranteed to be loaded - reading the config
+     * per-instance, once an entity actually exists, is always safe and also means changing
+     * maxHealth takes effect for newly spawned dummies without needing a restart.
+     */
+    private void applyMaxHealth() {
+        AttributeInstance maxHealthAttribute = this.getAttribute(Attributes.MAX_HEALTH);
+        if (maxHealthAttribute != null) {
+            maxHealthAttribute.setBaseValue(this.effectiveMaxHealthConfig());
+        }
+        this.setHealth(this.getMaxHealth());
+    }
+
+    private double effectiveMaxHealthConfig() {
+        return this.maxHealthOverride > 0.0D ? this.maxHealthOverride : CommonConfig.MAX_HEALTH.get();
+    }
+
+    /** -1 if this dummy is using the global {@link CommonConfig#MAX_HEALTH} default, otherwise its own override. */
+    public double getMaxHealthOverride() {
+        return this.maxHealthOverride;
+    }
+
+    /** Same range as {@link CommonConfig#MAX_HEALTH}; a value {@code <= 0} clears the override back to the global default. */
+    public void setMaxHealthOverride(double value) {
+        this.maxHealthOverride = value > 0.0D ? Math.min(value, 1_000_000_000.0D) : -1.0D;
+        this.applyMaxHealth();
     }
 
     /**
@@ -80,9 +120,23 @@ public class DummyEntity extends LivingEntity {
      * rather than something Player/Mob add individually), so this only needs to add what
      * {@code Player.createAttributes()} still adds on top of that base, plus this dummy's own
      * overrides (max health, knockback resistance, movement speed).
+     *
+     * <p>{@code WAYPOINT_TRANSMIT_RANGE}/{@code WAYPOINT_RECEIVE_RANGE} are added below with no
+     * custom value (unlike the rest of this list) specifically so they stay at their own vanilla
+     * default of {@code 0.0} - {@link LivingEntity#isTransmittingWaypoint()} is a hardcoded
+     * {@code getAttributeValue(WAYPOINT_TRANSMIT_RANGE) > 0.0}, and since every LivingEntity
+     * implements {@code WaypointTransmitter} now, giving this a positive value (mirroring
+     * Player's own real broadcast range, 6.0E7) is what made the dummy show up as a locator-bar
+     * waypoint other players get pointed toward. They still have to stay registered, though -
+     * {@code getAttributeValue()} throws if an attribute was never added to the builder at all,
+     * so leaving them out entirely (rather than just at their harmless zero default) would crash
+     * the moment a player got near a dummy.
      */
     public static AttributeSupplier.Builder createAttributes() {
         return LivingEntity.createLivingAttributes()
+                // Placeholder - the real, config-driven value is applied per-instance in the
+                // constructor, since CommonConfig isn't guaranteed loaded yet at this point
+                // (this runs once at mod-construction time, for every dummy that will ever exist).
                 .add(Attributes.MAX_HEALTH, 1_000_000.0D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.0D)
@@ -95,8 +149,8 @@ public class DummyEntity extends LivingEntity {
                 .add(Attributes.SNEAKING_SPEED)
                 .add(Attributes.MINING_EFFICIENCY)
                 .add(Attributes.SWEEPING_DAMAGE_RATIO)
-                .add(Attributes.WAYPOINT_TRANSMIT_RANGE, 6.0E7)
-                .add(Attributes.WAYPOINT_RECEIVE_RANGE, 6.0E7)
+                .add(Attributes.WAYPOINT_TRANSMIT_RANGE)
+                .add(Attributes.WAYPOINT_RECEIVE_RANGE)
                 .add(NeoForgeMod.CREATIVE_FLIGHT);
     }
 
@@ -107,7 +161,7 @@ public class DummyEntity extends LivingEntity {
         if (this.getHealth() < this.getMaxHealth()) {
             this.setHealth(this.getMaxHealth());
         }
-        if (!this.level().isClientSide) {
+        if (!this.level().isClientSide()) {
             // The dummy has no AI to "hold right-click", so if it's holding a shield, force it
             // into the same isUsingItem()/BLOCK state a player gets from actually raising one -
             // otherwise isBlocking() never returns true and the shield never reduces damage.
@@ -204,12 +258,12 @@ public class DummyEntity extends LivingEntity {
     @Override
     public InteractionResult interact(Player player, InteractionHand hand, Vec3 location) {
         ItemStack held = player.getItemInHand(hand);
-        if (held.is(Items.STICK) && !this.level().isClientSide) {
+        if (held.is(Items.STICK) && !this.level().isClientSide()) {
             this.openMenuFor(player);
             return InteractionResult.CONSUME;
         }
         if (held.is(Items.NAME_TAG) && held.has(DataComponents.CUSTOM_NAME)) {
-            if (!this.level().isClientSide) {
+            if (!this.level().isClientSide()) {
                 this.setCustomName(held.get(DataComponents.CUSTOM_NAME));
                 this.setCustomNameVisible(true);
                 if (!player.getAbilities().instabuild) {
@@ -266,11 +320,21 @@ public class DummyEntity extends LivingEntity {
 
     @Override
     public boolean canBeSeenAsEnemy() {
-        // Was `false` (copied from ArmorStand, which is never meant to be attacked). That broke
-        // the lure bait: several hostile mobs' own targeting AI re-checks canBeSeenAsEnemy() every
-        // tick and drops a target that fails it, so only mobs with simpler AI kept attacking.
-        // Which mobs the bait targets at all is filtered separately in lureNearbyMobs().
-        return true;
+        // Was hardcoded `true` at one point (having been hardcoded `false`, copied from
+        // ArmorStand, before that - which broke the lure bait since several hostile mobs'
+        // targeting AI drops a target that fails this check). Hardcoding it to `true`
+        // unconditionally went too far the other way: it made the dummy a valid target forever,
+        // even after being discarded or with the bait long gone.
+        //
+        // Gating on "holding bait" isn't just for correctness after death - it's also what makes
+        // mobs let go the instant the bait is pulled back out, for free. Every hostile mob's own
+        // AI (goal-based and brain-based alike) already re-reads this on essentially every tick
+        // to decide whether to keep its current target - Mob#getTarget() itself returns null the
+        // moment canAttack(target) fails, which folds in canBeSeenAsEnemy() - so flipping this to
+        // false makes the whole mob roster drop the dummy on their own via their own existing
+        // target-revalidation, without this class having to track or reach into any of them
+        // itself. (Symmetric: putting the bait back doesn't need a reason to fail either.)
+        return super.canBeSeenAsEnemy() && this.getMainHandItem().is(ModItems.LURE_BAIT.get());
     }
 
     @Override
@@ -281,5 +345,20 @@ public class DummyEntity extends LivingEntity {
     @Override
     public boolean shouldShowName() {
         return true;
+    }
+
+    @Override
+    protected void addAdditionalSaveData(ValueOutput output) {
+        super.addAdditionalSaveData(output);
+        if (this.maxHealthOverride > 0.0D) {
+            output.putDouble("MaxHealthOverride", this.maxHealthOverride);
+        }
+    }
+
+    @Override
+    protected void readAdditionalSaveData(ValueInput input) {
+        super.readAdditionalSaveData(input);
+        this.maxHealthOverride = input.getDoubleOr("MaxHealthOverride", -1.0D);
+        this.applyMaxHealth();
     }
 }

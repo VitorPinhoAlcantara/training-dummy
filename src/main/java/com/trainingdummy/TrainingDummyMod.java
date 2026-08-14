@@ -6,12 +6,16 @@ import com.trainingdummy.config.CommonConfig;
 import com.trainingdummy.entity.DummyEntity;
 import com.trainingdummy.network.DummyCuriosPagePayload;
 import com.trainingdummy.network.DummyDamagePayload;
+import com.trainingdummy.network.DummySetMaxHealthPayload;
 import com.trainingdummy.network.ServerPayloadHandler;
 import com.trainingdummy.registry.ModCreativeTabs;
 import com.trainingdummy.registry.ModEntities;
 import com.trainingdummy.registry.ModIngredientTypes;
 import com.trainingdummy.registry.ModItems;
 import com.trainingdummy.registry.ModMenus;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.attributes.RangedAttribute;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -27,6 +31,9 @@ public class TrainingDummyMod {
     public static final String MODID = "trainingdummy";
     public static final Logger LOGGER = LogUtils.getLogger();
 
+    /** Comfortably above the CommonConfig#MAX_HEALTH upper bound, with headroom to spare. */
+    private static final double WIDENED_ATTRIBUTE_CEILING = 1.0E9;
+
     public TrainingDummyMod(IEventBus modEventBus, ModContainer modContainer) {
         ModEntities.ENTITY_TYPES.register(modEventBus);
         ModItems.ITEMS.register(modEventBus);
@@ -39,6 +46,28 @@ public class TrainingDummyMod {
 
         modContainer.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
         modContainer.registerConfig(ModConfig.Type.COMMON, CommonConfig.SPEC);
+
+        this.widenVanillaAttributeRanges();
+    }
+
+    /**
+     * Both {@code MAX_HEALTH} (capped at 1024) and {@code ATTACK_DAMAGE} (capped at 2048) are
+     * vanilla {@link RangedAttribute}s - their computed value is clamped to that range no matter
+     * what base value or modifiers a mod applies, which silently caps the dummy's configurable
+     * max health and the highest per-hit damage it can ever report taking. Widening the shared
+     * {@code maxValue} field (made accessible via META-INF/accesstransformer.cfg) removes that
+     * ceiling for every entity, not just this dummy - harmless, since nothing else in the game
+     * normally tries to push health or attack damage anywhere near it.
+     */
+    private void widenVanillaAttributeRanges() {
+        widenRange(Attributes.MAX_HEALTH.value());
+        widenRange(Attributes.ATTACK_DAMAGE.value());
+    }
+
+    private static void widenRange(Attribute attribute) {
+        if (attribute instanceof RangedAttribute ranged) {
+            ranged.maxValue = WIDENED_ATTRIBUTE_CEILING;
+        }
     }
 
     private void registerAttributes(EntityAttributeCreationEvent event) {
@@ -55,5 +84,7 @@ public class TrainingDummyMod {
                 com.trainingdummy.client.ClientPayloadHandler::handleDummyDamage);
         registrar.playToServer(DummyCuriosPagePayload.TYPE, DummyCuriosPagePayload.STREAM_CODEC,
                 ServerPayloadHandler::handleCuriosPage);
+        registrar.playToServer(DummySetMaxHealthPayload.TYPE, DummySetMaxHealthPayload.STREAM_CODEC,
+                ServerPayloadHandler::handleSetMaxHealth);
     }
 }

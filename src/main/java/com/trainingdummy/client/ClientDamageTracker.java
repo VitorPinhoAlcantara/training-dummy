@@ -4,6 +4,8 @@ import com.trainingdummy.config.ClientConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -14,6 +16,16 @@ import java.util.Optional;
  * hit. Both are client config so they (and the SCREEN/CHAT, TOTAL/DPS presets) can be tuned live.
  */
 public final class ClientDamageTracker {
+
+    /** "." for the thousands/millions/... groups, "," for the decimal - e.g. 1.234.567,8. */
+    private static final DecimalFormat NUMBER_FORMAT;
+
+    static {
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.ROOT);
+        symbols.setGroupingSeparator('.');
+        symbols.setDecimalSeparator(',');
+        NUMBER_FORMAT = new DecimalFormat("#,##0.0", symbols);
+    }
 
     private static float streakTotal = 0.0F;
     private static long streakStartTick = Long.MIN_VALUE;
@@ -62,7 +74,7 @@ public final class ClientDamageTracker {
     }
 
     private static Component formatMessage(double value) {
-        String formatted = String.format(Locale.ROOT, "%.1f", value);
+        String formatted = NUMBER_FORMAT.format(value);
         String key = ClientConfig.DISPLAY_METRIC.get() == ClientConfig.DisplayMetric.DPS
                 ? "trainingdummy.display.dps"
                 : "trainingdummy.display.total";

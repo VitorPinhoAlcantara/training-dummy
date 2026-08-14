@@ -59,7 +59,7 @@ public class DummySpawnItem extends Item {
         double z = placePos.getZ() + 0.5D;
         // Face the player who placed it, not the direction the player was facing.
         float facingYaw = context.getRotation() + 180.0F;
-        dummy.moveTo(x, y, z, facingYaw, 0.0F);
+        dummy.snapTo(x, y, z, facingYaw, 0.0F);
         dummy.setYHeadRot(facingYaw);
         dummy.setYBodyRot(facingYaw);
         dummy.setCustomName(net.minecraft.network.chat.Component.translatable("entity.trainingdummy.dummy"));
