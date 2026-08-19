@@ -2,12 +2,8 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
-    "A": {
-      "item": "minecraft:armor_stand"
-    },
-    "H": {
-      "item": "minecraft:hay_block"
-    }
+    "A": "minecraft:armor_stand",
+    "H": "minecraft:hay_block"
   },
   "pattern": [
     "A",

@@ -27,6 +27,16 @@ public final class ServerPayloadHandler {
         });
     }
 
+    public static void handleClearNegativeEffects(DummyClearNegativeEffectsPayload payload, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            if (context.player() instanceof ServerPlayer serverPlayer
+                    && serverPlayer.level().getEntity(payload.dummyEntityId()) instanceof DummyEntity dummy
+                    && dummy.distanceToSqr(serverPlayer) < 64.0D) {
+                dummy.clearNegativeEffects();
+            }
+        });
+    }
+
     private ServerPayloadHandler() {
     }
 }

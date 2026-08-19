@@ -9,13 +9,6 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-/**
- * Reports the dummy's damage to the attacker. Listens to {@code LivingDamageEvent.Post} instead
- * of reading the {@code amount} parameter inside {@link DummyEntity#hurt}/{@code actuallyHurt} -
- * those are the raw, pre-mitigation damage; armor/shield/enchantment reduction all happen inside
- * vanilla's {@code actuallyHurt} itself (via NeoForge's DamageContainer), so this event is the
- * only place the true final damage is available.
- */
 @EventBusSubscriber(modid = TrainingDummyMod.MODID)
 public final class DummyCombatEvents {
 

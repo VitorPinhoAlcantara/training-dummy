@@ -19,20 +19,6 @@ import net.minecraft.world.item.component.ResolvableProfile;
 
 import java.util.Optional;
 
-/**
- * Renders the dummy with the vanilla player model. Defaults to the "Steve" skin, but if it's
- * been renamed (with a name tag) to something matching a real Minecraft account, it wears that
- * player's actual skin instead - including switching between the wide/slim arm models, which is
- * why {@link #wideModel}/{@link #slimModel} get swapped per-frame in {@link #submit} rather than
- * the render state carrying a fixed one, like {@code ArmorStandRenderer} does for its small/big
- * models.
- *
- * <p>Unlike the 1.21.1 branch, this can't reuse vanilla's own {@code PlayerModel}/{@code
- * AvatarRenderer} classes - both are hard-bound to real client player entities ({@code
- * ClientAvatarEntity}) as of this Minecraft version. Built from the same baked model layers
- * ({@code ModelLayers.PLAYER}/{@code PLAYER_SLIM}) wrapped in the generic {@code HumanoidModel}
- * instead, the same pattern {@code ArmorStandRenderer} uses for a non-player humanoid entity.
- */
 public class DummyEntityRenderer extends LivingEntityRenderer<DummyEntity, DummyRenderState, HumanoidModel<DummyRenderState>> {
 
     public static final Identifier DEFAULT_SKIN = Identifier.withDefaultNamespace("textures/entity/player/wide/steve.png");

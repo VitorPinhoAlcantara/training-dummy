@@ -2,11 +2,6 @@ package com.trainingdummy.config;
 
 import net.neoforged.neoforge.common.ModConfigSpec;
 
-/**
- * Server-authoritative gameplay values (as opposed to the purely-cosmetic display settings in
- * {@link ClientConfig}) - these affect what actually happens in the world, so they have to be
- * COMMON, not CLIENT, config.
- */
 public final class CommonConfig {
 
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();

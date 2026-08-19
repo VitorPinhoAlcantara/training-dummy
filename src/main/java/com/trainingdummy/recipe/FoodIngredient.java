@@ -12,11 +12,6 @@ import net.neoforged.neoforge.common.crafting.IngredientType;
 
 import java.util.stream.Stream;
 
-/**
- * Matches any item that has {@link net.minecraft.world.food.FoodProperties} - i.e. "any food",
- * for the lure bait recipe (the user wants "whatever food you've got" to work, not one fixed
- * item). Used in recipe JSON as {@code {"type": "trainingdummy:food"}}.
- */
 public record FoodIngredient() implements ICustomIngredient {
 
     public static final MapCodec<FoodIngredient> CODEC = MapCodec.unit(FoodIngredient::new);

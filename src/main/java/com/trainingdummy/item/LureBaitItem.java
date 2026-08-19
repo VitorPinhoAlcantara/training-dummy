@@ -9,7 +9,6 @@ import net.minecraft.world.item.component.TooltipDisplay;
 
 import java.util.function.Consumer;
 
-/** No behavior of its own - entity.DummyEntity checks for this item in the dummy's main hand. */
 public class LureBaitItem extends Item {
 
     public LureBaitItem(Properties properties) {

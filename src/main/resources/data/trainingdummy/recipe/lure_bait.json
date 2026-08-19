@@ -2,11 +2,9 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
-    "#": {
-      "item": "minecraft:bone_meal"
-    },
+    "#": "minecraft:bone_meal",
     "X": {
-      "type": "trainingdummy:food"
+      "neoforge:ingredient_type": "trainingdummy:food"
     }
   },
   "pattern": [

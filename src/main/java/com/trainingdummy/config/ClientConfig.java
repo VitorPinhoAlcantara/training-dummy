@@ -2,12 +2,6 @@ package com.trainingdummy.config;
 
 import net.neoforged.neoforge.common.ModConfigSpec;
 
-/**
- * Client-only config: every time value and display preset is here (not COMMON), because the
- * damage window/duration/format are purely client-side decisions - the server just streams raw
- * hit amounts (see network.DummyDamagePayload) and the client decides how to fold and show them.
- * Standard NeoForge ModConfigSpec, so it gets a native config screen and works with Configured.
- */
 public final class ClientConfig {
 
     public enum DisplayLocation {
@@ -52,7 +46,6 @@ public final class ClientConfig {
 
     public static final ModConfigSpec SPEC = BUILDER.build();
 
-    /** Parsed {@link #DISPLAY_COLOR}, ARGB packed into an int - falls back to the default color on a malformed config value. */
     public static int displayColorArgb() {
         String hex = DISPLAY_COLOR.get().trim();
         if (hex.startsWith("#")) {
@@ -65,7 +58,6 @@ public final class ClientConfig {
                 return (int) Long.parseLong(hex, 16);
             }
         } catch (NumberFormatException ignored) {
-            // Falls through to the default below.
         }
         return 0xFFCC2222;
     }

@@ -16,14 +16,6 @@ import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
-/**
- * Shows the dummy's armor/offhand slots (plus Curios slots, if that mod is loaded) alongside
- * the opening player's own inventory for easy drag-and-drop gearing. Layout mirrors vanilla:
- * an armor "paperdoll" column on the left (helmet on top, like the survival inventory), an
- * optional Curios grid to its right, and the player's own inventory below - all the position
- * constants live here so {@link com.trainingdummy.client.DummyScreen} can draw section labels
- * and panel backgrounds that line up with them.
- */
 public class DummyMenu extends AbstractContainerMenu {
 
     private static final EquipmentSlot[] EQUIPMENT_ORDER = {
@@ -47,21 +39,14 @@ public class DummyMenu extends AbstractContainerMenu {
 
     public static final int CURIOS_X = ARMOR_X + SLOT_SIZE + MARGIN;
     public static final int CURIOS_COLUMNS = 8;
-    /** Curios slot counts are unbounded (relics/artifacts can grant more) - cap the grid and page through the rest. */
     public static final int MAX_CURIOS_ROWS = 5;
     public static final int CURIOS_PAGE_CAPACITY = CURIOS_COLUMNS * MAX_CURIOS_ROWS;
 
     public static final int PLAYER_INV_X = MARGIN;
     public static final int MIN_CONTENT_WIDTH = PLAYER_INV_X + 9 * SLOT_SIZE + MARGIN;
 
-    /**
-     * Row of per-dummy settings (display metric, display location, max health) below the curio
-     * grid/armor paperdoll, whichever is taller. Positioned relative to {@code MAX_CURIOS_ROWS}
-     * rather than however many curio rows this particular dummy actually has, so it doesn't jump
-     * around depending on how many accessory slots are equipped/available.
-     */
     public static final int CONTROLS_Y = TOP_Y + ARMOR_HEIGHT + 6;
-    public static final int CONTROLS_HEIGHT = 40;
+    public static final int CONTROLS_HEIGHT = 60;
 
     public final int curiosTotalSlotCount;
     public final int curiosPageSlotCount;
@@ -83,9 +68,6 @@ public class DummyMenu extends AbstractContainerMenu {
         this.dummy = dummy;
         this.equipmentContainer = new EquipmentContainer(dummy);
 
-        // Slot count is read fresh on every open/page-change, so a dummy whose curio count
-        // changed (a relic granting/removing slots) is picked up correctly next time the menu
-        // is (re)built - see network.DummyCuriosPagePayload for how page changes trigger that.
         this.curiosTotalSlotCount = CuriosCompat.isLoaded() ? CuriosCompat.slotCount(dummy) : 0;
         int totalRows = this.curiosTotalSlotCount == 0 ? 0
                 : (this.curiosTotalSlotCount + CURIOS_COLUMNS - 1) / CURIOS_COLUMNS;
@@ -98,8 +80,6 @@ public class DummyMenu extends AbstractContainerMenu {
         for (int i = 0; i < EQUIPMENT_ORDER.length; i++) {
             int gap = i >= HAND_SLOTS_START ? ARMOR_OFFHAND_GAP : 0;
             Component name = Component.translatable("trainingdummy.slot." + EQUIPMENT_NAME_KEYS[i]);
-            // Main hand and offhand stay unrestricted (vanilla allows anything there too),
-            // armor slots only accept the matching piece.
             EquipmentSlot restrictTo = i >= HAND_SLOTS_START ? null : EQUIPMENT_ORDER[i];
             this.addSlot(new ArmorSlot(this.equipmentContainer, i, ARMOR_X, TOP_Y + i * SLOT_SIZE + gap,
                     name, EQUIPMENT_ICONS[i], dummy, restrictTo));
@@ -142,7 +122,6 @@ public class DummyMenu extends AbstractContainerMenu {
         return this.dummy;
     }
 
-    /** Public passthrough so {@link CuriosCompat} (a different package) can add curio slots. */
     public void addCurioSlot(Slot slot) {
         this.addSlot(slot);
     }
@@ -162,9 +141,6 @@ public class DummyMenu extends AbstractContainerMenu {
                 return ItemStack.EMPTY;
             }
         } else {
-            // Shift-clicking from the player's inventory: try Curios first (a ring shouldn't end
-            // up in the dummy's hand just because hands are unrestricted and come first in slot
-            // order), then armor, then finally the hands as a catch-all for anything else.
             int armorStart = 0;
             int handsStart = HAND_SLOTS_START;
             int curiosStart = EQUIPMENT_ORDER.length;
@@ -190,10 +166,6 @@ public class DummyMenu extends AbstractContainerMenu {
         return this.dummy.isAlive() && this.dummy.distanceToSqr(player) < 64.0D;
     }
 
-    /**
-     * Adapts the dummy's armor/offhand equipment slots to a vanilla {@link Container} so plain
-     * {@link Slot} instances can read/write them directly.
-     */
     private static final class EquipmentContainer implements Container {
 
         private final DummyEntity dummy;
@@ -246,7 +218,6 @@ public class DummyMenu extends AbstractContainerMenu {
 
         @Override
         public void setChanged() {
-            // No extra bookkeeping needed - the dummy's equipment is the source of truth.
         }
 
         @Override

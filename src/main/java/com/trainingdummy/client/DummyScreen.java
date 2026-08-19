@@ -3,6 +3,7 @@ package com.trainingdummy.client;
 import com.trainingdummy.config.ClientConfig;
 import com.trainingdummy.menu.DummyMenu;
 import com.trainingdummy.menu.SlotTooltip;
+import com.trainingdummy.network.DummyClearNegativeEffectsPayload;
 import com.trainingdummy.network.DummyCuriosPagePayload;
 import com.trainingdummy.network.DummySetMaxHealthPayload;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -14,11 +15,6 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
-/**
- * No custom texture asset - the panel is a vanilla-style beveled surface drawn procedurally
- * (raised outer border, recessed slot wells) instead of a hand-authored PNG, following the same
- * light-gray inventory look Minecraft and mods like Curios use, just built out of flat fills.
- */
 public class DummyScreen extends AbstractContainerScreen<DummyMenu> {
 
     private static final int BASE = 0xFFC6C6C6;
@@ -30,8 +26,6 @@ public class DummyScreen extends AbstractContainerScreen<DummyMenu> {
     private EditBox maxHealthBox;
 
     public DummyScreen(DummyMenu menu, Inventory playerInventory, Component title) {
-        // imageWidth/imageHeight are constructor-only (final) as of this Minecraft version, so
-        // the menu's computed size has to go in here instead of being assigned afterward.
         super(menu, playerInventory, title, menu.imageWidth, menu.imageHeight);
         this.titleLabelX = 8;
         this.titleLabelY = 6;
@@ -78,6 +72,11 @@ public class DummyScreen extends AbstractContainerScreen<DummyMenu> {
 
         this.addRenderableWidget(Button.builder(Component.translatable("trainingdummy.gui.maxHealth.set"),
                 b -> this.submitMaxHealth()).bounds(controlsX + 104, fieldY, 60, 16).build());
+
+        int effectsY = fieldY + 20;
+        this.addRenderableWidget(Button.builder(Component.translatable("trainingdummy.gui.clearNegativeEffects"),
+                b -> ClientPacketDistributor.sendToServer(new DummyClearNegativeEffectsPayload(this.menu.getDummy().getId())))
+                .bounds(controlsX, effectsY, 164, 16).build());
     }
 
     private static Component metricLabel() {
@@ -90,7 +89,6 @@ public class DummyScreen extends AbstractContainerScreen<DummyMenu> {
                 ? "trainingdummy.gui.location.chat" : "trainingdummy.gui.location.screen");
     }
 
-    /** Blank or 0 clears the per-dummy override, going back to the global config default - see network.DummySetMaxHealthPayload. */
     private void submitMaxHealth() {
         String text = this.maxHealthBox.getValue().trim();
         double value = text.isEmpty() ? 0.0D : parseOrZero(text);
@@ -105,7 +103,6 @@ public class DummyScreen extends AbstractContainerScreen<DummyMenu> {
         }
     }
 
-    /** Curios slot positions are fixed once built, so a page change reopens the menu on that page - see DummyEntity#openMenuFor. */
     private void requestPage(int page) {
         int clamped = Math.max(0, Math.min(page, this.menu.curiosTotalPages - 1));
         if (clamped != this.menu.curiosPage) {
@@ -137,11 +134,6 @@ public class DummyScreen extends AbstractContainerScreen<DummyMenu> {
                 this.inventoryLabelX, this.inventoryLabelY, LABEL_COLOR, false);
     }
 
-    /**
-     * Vanilla only shows a tooltip for slots that have an item in them. Curios' own screen adds a
-     * name tooltip for empty accessory slots too (e.g. hovering an empty Ring slot shows "Ring") -
-     * same idea here, for both the armor paperdoll and any Curios slots.
-     */
     @Override
     protected void extractTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         if (this.hoveredSlot instanceof SlotTooltip named && !this.hoveredSlot.hasItem()) {
@@ -151,7 +143,6 @@ public class DummyScreen extends AbstractContainerScreen<DummyMenu> {
         super.extractTooltip(graphics, mouseX, mouseY);
     }
 
-    /** Outer panel with a light top/left edge and dark bottom/right edge, like vanilla's inventory frame. */
     private static void drawRaisedPanel(GuiGraphicsExtractor graphics, int x, int y, int w, int h) {
         graphics.fill(x, y, x + w, y + h, BASE);
         graphics.fill(x, y, x + w, y + 2, LIGHT);
@@ -160,7 +151,6 @@ public class DummyScreen extends AbstractContainerScreen<DummyMenu> {
         graphics.fill(x + w - 2, y, x + w, y + h, SHADOW);
     }
 
-    /** Recessed 18x18 slot well: dark top/left edge, light bottom/right edge, mid-gray fill. */
     private static void drawSlotWell(GuiGraphicsExtractor graphics, int x, int y) {
         graphics.fill(x, y, x + 18, y + 18, SHADOW);
         graphics.fill(x, y, x + 17, y + 1, 0xFF373737);

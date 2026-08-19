@@ -4,6 +4,7 @@
   "item.trainingdummy.dummy_spawner": "Training Dummy",
   "item.trainingdummy.dummy_spawner.tooltip.configure": "Right-click with a Stick to open its inventory",
   "item.trainingdummy.dummy_spawner.tooltip.remove": "Hit with a Stick to remove it",
+  "item.trainingdummy.dummy_spawner.tooltip.loaded": "Remembers its name, health and gear",
   "item.trainingdummy.lure_bait": "Lure Bait",
   "item.trainingdummy.lure_bait.tooltip": "Hold in a dummy's main hand to lure nearby mobs into attacking it",
   "entity.trainingdummy.dummy": "Training Dummy",
@@ -13,6 +14,7 @@
   "trainingdummy.gui.location.screen": "Screen",
   "trainingdummy.gui.maxHealth": "Max Health",
   "trainingdummy.gui.maxHealth.set": "Set",
+  "trainingdummy.gui.clearNegativeEffects": "Clear Negative Effects",
 
   "trainingdummy.slot.head": "Helmet",
   "trainingdummy.slot.chest": "Chestplate",

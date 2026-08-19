@@ -2,16 +2,23 @@ package com.trainingdummy.entity;
 
 import com.trainingdummy.config.CommonConfig;
 import com.trainingdummy.curios.CuriosCompat;
+import com.trainingdummy.item.DummyCurioEntry;
+import com.trainingdummy.item.DummyStoredData;
 import com.trainingdummy.menu.DummyMenu;
+import com.trainingdummy.registry.ModDataComponents;
 import com.trainingdummy.registry.ModItems;
+import com.trainingdummy.registry.ModSounds;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectCategory;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.HumanoidArm;
@@ -33,43 +40,18 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForgeMod;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
-/**
- * A stationary, player-shaped combat dummy. Not a real {@code Player}/FakePlayer - a plain
- * {@link LivingEntity} (same base class ArmorStand uses) rendered with the vanilla player
- * model, so it needs no skin lookups and no server-side "fake account" machinery.
- *
- * <p>Health never drops (see {@link #actuallyHurt}); the only way to remove it from the world
- * is a melee hit with a vanilla stick (see {@link #hurtServer}). The actual damage-reporting
- * packet is sent from {@link com.trainingdummy.event.DummyCombatEvents} listening to
- * {@code LivingDamageEvent.Post}, not from here - that event fires with the damage already
- * reduced by armor/shield/enchantments, whereas the {@code amount} parameters in this class are
- * still the raw pre-reduction values.
- *
- * <p>Unlike the 1.21.1 branch, this class does not keep its own hand/armor item lists or
- * override getItemBySlot/setItemSlot/addAdditionalSaveData/readAdditionalSaveData - as of this
- * Minecraft version LivingEntity has a built-in {@code EntityEquipment} store (same one
- * ArmorStand now relies on) that already handles storage and persistence for every equipment
- * slot, so there's nothing left for this class to do there.
- */
 public class DummyEntity extends LivingEntity {
 
     private static final int BAIT_SCAN_INTERVAL_TICKS = 20;
 
-    /**
-     * Which "page" of the Curios grid its inventory screen should open on - server-side only,
-     * not saved, just so the page-flip buttons (see menu.DummyMenu) can reopen the menu on a
-     * different page. Curios slot counts change live (relics/artifacts can grant more), so this
-     * is re-clamped to whatever is actually available every time the menu opens.
-     */
+    public static final Component DEFAULT_NAME = Component.translatable("entity.trainingdummy.dummy");
+
     private int curiosPage = 0;
 
-    /**
-     * Per-dummy override of {@link CommonConfig#MAX_HEALTH}, set from the inventory screen's
-     * health field (see network.DummySetMaxHealthPayload) - a negative value means "no override,
-     * use the global config default".
-     */
     private double maxHealthOverride = -1.0D;
 
     public DummyEntity(EntityType<? extends DummyEntity> type, Level level) {
@@ -79,12 +61,6 @@ public class DummyEntity extends LivingEntity {
         this.applyMaxHealth();
     }
 
-    /**
-     * Applied here (rather than baked into createAttributes()) since that method runs once at
-     * mod-construction time, before configs are guaranteed to be loaded - reading the config
-     * per-instance, once an entity actually exists, is always safe and also means changing
-     * maxHealth takes effect for newly spawned dummies without needing a restart.
-     */
     private void applyMaxHealth() {
         AttributeInstance maxHealthAttribute = this.getAttribute(Attributes.MAX_HEALTH);
         if (maxHealthAttribute != null) {
@@ -97,46 +73,17 @@ public class DummyEntity extends LivingEntity {
         return this.maxHealthOverride > 0.0D ? this.maxHealthOverride : CommonConfig.MAX_HEALTH.get();
     }
 
-    /** -1 if this dummy is using the global {@link CommonConfig#MAX_HEALTH} default, otherwise its own override. */
     public double getMaxHealthOverride() {
         return this.maxHealthOverride;
     }
 
-    /** Same range as {@link CommonConfig#MAX_HEALTH}; a value {@code <= 0} clears the override back to the global default. */
     public void setMaxHealthOverride(double value) {
         this.maxHealthOverride = value > 0.0D ? Math.min(value, 1_000_000_000.0D) : -1.0D;
         this.applyMaxHealth();
     }
 
-    /**
-     * Mirrors {@code Player.createAttributes()} (base living attributes + every attribute Player
-     * adds on top) rather than just the handful this class actually reads itself. Curio/relic
-     * mods (Relics' Piglin Mask crashed us this way on the 1.21.1 branch) assume any wearer has a
-     * full player-like attribute set and call {@code getAttribute(...)} on it without a null
-     * check - so a dummy missing an attribute they touch is a live crash, not just a shrug.
-     *
-     * <p>{@code LivingEntity.createLivingAttributes()} itself grew several attributes since
-     * 1.21.1 (armor, armor toughness and entity interaction range are now part of the base set
-     * rather than something Player/Mob add individually), so this only needs to add what
-     * {@code Player.createAttributes()} still adds on top of that base, plus this dummy's own
-     * overrides (max health, knockback resistance, movement speed).
-     *
-     * <p>{@code WAYPOINT_TRANSMIT_RANGE}/{@code WAYPOINT_RECEIVE_RANGE} are added below with no
-     * custom value (unlike the rest of this list) specifically so they stay at their own vanilla
-     * default of {@code 0.0} - {@link LivingEntity#isTransmittingWaypoint()} is a hardcoded
-     * {@code getAttributeValue(WAYPOINT_TRANSMIT_RANGE) > 0.0}, and since every LivingEntity
-     * implements {@code WaypointTransmitter} now, giving this a positive value (mirroring
-     * Player's own real broadcast range, 6.0E7) is what made the dummy show up as a locator-bar
-     * waypoint other players get pointed toward. They still have to stay registered, though -
-     * {@code getAttributeValue()} throws if an attribute was never added to the builder at all,
-     * so leaving them out entirely (rather than just at their harmless zero default) would crash
-     * the moment a player got near a dummy.
-     */
     public static AttributeSupplier.Builder createAttributes() {
         return LivingEntity.createLivingAttributes()
-                // Placeholder - the real, config-driven value is applied per-instance in the
-                // constructor, since CommonConfig isn't guaranteed loaded yet at this point
-                // (this runs once at mod-construction time, for every dummy that will ever exist).
                 .add(Attributes.MAX_HEALTH, 1_000_000.0D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.0D)
@@ -157,14 +104,10 @@ public class DummyEntity extends LivingEntity {
     @Override
     public void tick() {
         super.tick();
-        // Keep it topped off even outside of combat (regen, potions, etc. should never matter).
         if (this.getHealth() < this.getMaxHealth()) {
             this.setHealth(this.getMaxHealth());
         }
         if (!this.level().isClientSide()) {
-            // The dummy has no AI to "hold right-click", so if it's holding a shield, force it
-            // into the same isUsingItem()/BLOCK state a player gets from actually raising one -
-            // otherwise isBlocking() never returns true and the shield never reduces damage.
             if (!this.isUsingItem() && this.getOffhandItem().is(Items.SHIELD)) {
                 this.startUsingItem(InteractionHand.OFF_HAND);
             }
@@ -174,37 +117,16 @@ public class DummyEntity extends LivingEntity {
         }
     }
 
-    /**
-     * Makes any hostile mob within range that can see this dummy (and isn't already busy fighting
-     * something) attack it. Only actually-hostile mobs ({@link Enemy}, e.g. zombies/skeletons/
-     * creepers) - wolves, foxes and bees are {@code Mob}s too but they're neutral/passive by
-     * nature and shouldn't be forced to attack just because the bait is out.
-     */
     private void lureNearbyMobs() {
         double radius = CommonConfig.BAIT_RADIUS.get();
         AABB area = this.getBoundingBox().inflate(radius);
-        // The dummy is a LivingEntity, not a Mob, so it can never show up in this list itself.
         List<Mob> nearby = this.level().getEntitiesOfClass(Mob.class, area,
                 mob -> mob.isAlive() && mob instanceof Enemy);
         for (Mob mob : nearby) {
-            LivingEntity currentTarget = mob.getTarget();
-            if ((currentTarget == null || !currentTarget.isAlive()) && mob.hasLineOfSight(this)) {
+            if (mob.hasLineOfSight(this)) {
                 mob.setTarget(this);
-                // Older goal-based mobs (zombies, skeletons, spiders...) act on setTarget() alone.
-                // Newer brain-based mobs (piglins, breezes, wardens...) decide who to fight from
-                // this memory instead and mostly ignore the legacy target field, so both need to
-                // be set for the bait to work on the full mob roster - harmless no-op for mobs
-                // that don't use their brain for combat. (Phantoms are a known exception either
-                // way - their attack goal is hard-coded to only ever target an actual Player, so
-                // nothing short of replacing that vanilla goal would bait them.)
                 mob.getBrain().setMemory(MemoryModuleType.ATTACK_TARGET, this);
             }
-            // Piglins/Piglin Brutes re-validate ATTACK_TARGET every tick against their own
-            // whitelist (nearest visible player/hoglin/zombified ally) and erase anything else
-            // immediately - that's the "targets for an instant then gives up" loop. The only
-            // target they'll actually keep chasing outside that whitelist is whoever they're
-            // "angry at", the same memory vanilla sets when they get hurt by something, so we
-            // set that directly (with the same 600-tick/30s expiry vanilla uses) to bypass it.
             if (mob instanceof AbstractPiglin) {
                 mob.getBrain().setMemoryWithExpiry(MemoryModuleType.ANGRY_AT, this.getUUID(), 600L);
             }
@@ -220,31 +142,29 @@ public class DummyEntity extends LivingEntity {
         if (isStickHit(source)) {
             level.playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.ARMOR_STAND_BREAK,
                     this.getSoundSource(), 1.0F, 1.0F);
-            this.dropAllEquipment(level);
+            this.spawnLoadedDummySpawner(level);
             this.discard();
             return true;
         }
         return super.hurtServer(level, source, amount);
     }
 
-    /**
-     * Gives back everything it was wearing/holding (and any Curios), plus a spawner item for
-     * itself - same courtesy vanilla's ArmorStand gives when broken. Each slot is cleared right
-     * after dropping (rather than just handed a live reference into the equipment list) so there
-     * is no window where the entity is mid-removal with equipment still "equipped".
-     */
-    private void dropAllEquipment(ServerLevel level) {
+    private void spawnLoadedDummySpawner(ServerLevel level) {
+        List<ItemStack> equipment = new ArrayList<>(EquipmentSlot.VALUES.size());
         for (EquipmentSlot slot : EquipmentSlot.VALUES) {
-            ItemStack stack = this.getItemBySlot(slot);
-            if (!stack.isEmpty()) {
-                this.spawnAtLocation(level, stack.copy());
-                this.setItemSlot(slot, ItemStack.EMPTY);
-            }
+            equipment.add(this.getItemBySlot(slot).copy());
         }
-        if (CuriosCompat.isLoaded()) {
-            CuriosCompat.dropAll(this, level);
+        List<DummyCurioEntry> curios = CuriosCompat.isLoaded() ? CuriosCompat.captureAll(this) : List.of();
+        DummyStoredData stored = new DummyStoredData(this.maxHealthOverride, equipment, curios);
+
+        ItemStack spawnerStack = new ItemStack(ModItems.DUMMY_SPAWNER.get());
+        if (this.getCustomName() != null && !this.getCustomName().equals(DEFAULT_NAME)) {
+            spawnerStack.set(DataComponents.CUSTOM_NAME, this.getCustomName());
         }
-        this.spawnAtLocation(level, new ItemStack(ModItems.DUMMY_SPAWNER.get()));
+        if (!stored.isEmpty()) {
+            spawnerStack.set(ModDataComponents.DUMMY_DATA.get(), stored);
+        }
+        this.spawnAtLocation(level, spawnerStack);
     }
 
     @Override
@@ -253,6 +173,11 @@ public class DummyEntity extends LivingEntity {
         if (this.getHealth() < this.getMaxHealth()) {
             this.setHealth(this.getMaxHealth());
         }
+    }
+
+    @Override
+    protected SoundEvent getHurtSound(DamageSource source) {
+        return ModSounds.DUMMY_HURT.get();
     }
 
     @Override
@@ -275,13 +200,17 @@ public class DummyEntity extends LivingEntity {
         return super.interact(player, hand, location);
     }
 
-    /**
-     * Whatever name the dummy is showing (renamed with a name tag, or the default) - the client
-     * renderer uses this same string to look up a matching player skin, so renaming doubles as
-     * "change skin" per the user's request.
-     */
     public String getSkinName() {
         return this.getCustomName() != null ? this.getCustomName().getString() : "";
+    }
+
+    public void clearNegativeEffects() {
+        List<MobEffectInstance> harmful = this.getActiveEffects().stream()
+                .filter(effect -> effect.getEffect().value().getCategory() == MobEffectCategory.HARMFUL)
+                .collect(Collectors.toList());
+        for (MobEffectInstance effect : harmful) {
+            this.removeEffect(effect.getEffect());
+        }
     }
 
     public int getCuriosPage() {
@@ -292,7 +221,6 @@ public class DummyEntity extends LivingEntity {
         this.curiosPage = Math.max(0, page);
     }
 
-    /** Also called by {@link com.trainingdummy.network.DummyCuriosPagePayload}'s handler to reopen on a new page. */
     public void openMenuFor(Player player) {
         player.openMenu(new SimpleMenuProvider(
                 (containerId, playerInventory, p) -> new DummyMenu(containerId, playerInventory, this),
@@ -310,7 +238,6 @@ public class DummyEntity extends LivingEntity {
 
     @Override
     public void push(net.minecraft.world.entity.Entity entity) {
-        // Stationary target - never gets shoved around by other entities.
     }
 
     @Override
@@ -320,20 +247,6 @@ public class DummyEntity extends LivingEntity {
 
     @Override
     public boolean canBeSeenAsEnemy() {
-        // Was hardcoded `true` at one point (having been hardcoded `false`, copied from
-        // ArmorStand, before that - which broke the lure bait since several hostile mobs'
-        // targeting AI drops a target that fails this check). Hardcoding it to `true`
-        // unconditionally went too far the other way: it made the dummy a valid target forever,
-        // even after being discarded or with the bait long gone.
-        //
-        // Gating on "holding bait" isn't just for correctness after death - it's also what makes
-        // mobs let go the instant the bait is pulled back out, for free. Every hostile mob's own
-        // AI (goal-based and brain-based alike) already re-reads this on essentially every tick
-        // to decide whether to keep its current target - Mob#getTarget() itself returns null the
-        // moment canAttack(target) fails, which folds in canBeSeenAsEnemy() - so flipping this to
-        // false makes the whole mob roster drop the dummy on their own via their own existing
-        // target-revalidation, without this class having to track or reach into any of them
-        // itself. (Symmetric: putting the bait back doesn't need a reason to fail either.)
         return super.canBeSeenAsEnemy() && this.getMainHandItem().is(ModItems.LURE_BAIT.get());
     }
 

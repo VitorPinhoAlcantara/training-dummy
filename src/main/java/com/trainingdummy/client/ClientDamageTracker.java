@@ -1,23 +1,22 @@
 package com.trainingdummy.client;
 
+import com.trainingdummy.TrainingDummyMod;
 import com.trainingdummy.config.ClientConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 import java.util.Optional;
 
-/**
- * Client-side only. Every hit adds to a running total ("streak"). If more than
- * hitResetSeconds pass without a hit, the next hit starts a fresh streak instead of adding to
- * the old one. displayDurationSeconds controls how long the number stays visible after the last
- * hit. Both are client config so they (and the SCREEN/CHAT, TOTAL/DPS presets) can be tuned live.
- */
+@EventBusSubscriber(modid = TrainingDummyMod.MODID, value = Dist.CLIENT)
 public final class ClientDamageTracker {
 
-    /** "." for the thousands/millions/... groups, "," for the decimal - e.g. 1.234.567,8. */
     private static final DecimalFormat NUMBER_FORMAT;
 
     static {
@@ -27,17 +26,15 @@ public final class ClientDamageTracker {
         NUMBER_FORMAT = new DecimalFormat("#,##0.0", symbols);
     }
 
+    private static final double MIN_DPS_WINDOW_SECONDS = 1.0D;
+
     private static float streakTotal = 0.0F;
     private static long streakStartTick = Long.MIN_VALUE;
     private static long lastHitTick = Long.MIN_VALUE;
 
-    /**
-     * Frozen at the moment of the last hit, rather than recomputed every frame - DPS in
-     * particular is total/elapsed-time, so recalculating it every single frame while nothing new
-     * happens made it drift up and down continuously and was unreadable. It only needs to change
-     * when there's actually a new hit to reflect.
-     */
     private static Component lastMessage = null;
+
+    private static boolean pendingFlush = false;
 
     public static void recordHit(int dummyId, float amount) {
         long now = currentTick();
@@ -49,19 +46,25 @@ public final class ClientDamageTracker {
         }
         streakTotal += amount;
         lastHitTick = now;
-        lastMessage = formatMessage(currentMetricValue(now));
+        pendingFlush = true;
+    }
+
+    @SubscribeEvent
+    static void onClientTick(ClientTickEvent.Post event) {
+        if (!pendingFlush) {
+            return;
+        }
+        pendingFlush = false;
+        lastMessage = formatMessage(currentMetricValue(currentTick()));
 
         if (ClientConfig.DISPLAY_LOCATION.get() == ClientConfig.DisplayLocation.CHAT) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null) {
-                // Purely client-side (never goes to the server) - same mechanism the client uses
-                // for its own local system messages.
                 mc.player.sendSystemMessage(lastMessage);
             }
         }
     }
 
-    /** Value to show on the HUD overlay this frame, or empty if nothing should be shown. */
     public static Optional<Component> currentHudMessage() {
         if (ClientConfig.DISPLAY_LOCATION.get() != ClientConfig.DisplayLocation.SCREEN || lastHitTick == Long.MIN_VALUE) {
             return Optional.empty();
@@ -76,7 +79,7 @@ public final class ClientDamageTracker {
 
     private static double currentMetricValue(long now) {
         if (ClientConfig.DISPLAY_METRIC.get() == ClientConfig.DisplayMetric.DPS) {
-            double elapsedSeconds = Math.max((now - streakStartTick) / 20.0D, 0.05D);
+            double elapsedSeconds = Math.max((now - streakStartTick) / 20.0D, MIN_DPS_WINDOW_SECONDS);
             return streakTotal / elapsedSeconds;
         }
         return streakTotal;

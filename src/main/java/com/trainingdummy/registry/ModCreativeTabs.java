@@ -15,10 +15,6 @@ public final class ModCreativeTabs {
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TRAINING_DUMMY_TAB =
             CREATIVE_MODE_TABS.register("training_dummy", () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.trainingdummy"))
-                    // No withTabsAfter/Before: relative positioning against a shared anchor (e.g.
-                    // COMBAT) is exactly what caused a tab-ordering cycle once Artifacts/Relics
-                    // (which position their own tabs the same way) were in the mix. Unpositioned
-                    // tabs just get appended at the end - no ordering constraint, no cycle risk.
                     .icon(() -> ModItems.DUMMY_SPAWNER.get().getDefaultInstance())
                     .displayItems((parameters, output) -> {
                         output.accept(ModItems.DUMMY_SPAWNER.get());

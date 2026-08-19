@@ -1,0 +1,10 @@
+{
+  "entity.dummy.hurt": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.generic.hurt",
+        "type": "event"
+      }
+    ]
+  }
+}

@@ -7,11 +7,6 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 
-/**
- * Sent server -> attacking client whenever a dummy takes a hit, carrying the exact
- * post-mitigation damage amount. All rolling-window/display timing logic lives purely
- * on the client (see client.ClientDamageTracker) so it can be tuned via the client config.
- */
 public record DummyDamagePayload(int dummyEntityId, float amount) implements CustomPacketPayload {
 
     public static final Type<DummyDamagePayload> TYPE =

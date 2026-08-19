@@ -2,6 +2,24 @@
 
 All notable changes to this mod are documented here.
 
+## [1.3] - 2026-08-19
+
+### New
+- Breaking a dummy now saves its name, configured health, armor and curios onto its own spawner item - placing it back down recreates the dummy just as it was (negative effects are not saved).
+- The spawner item can be renamed in an anvil to set the name of the dummy it creates.
+- New button in the dummy's inventory to remove negative effects on the spot, instead of waiting for them to run out.
+- Lure bait now takes priority over the player - mobs will prefer attacking the dummy even if they're already fighting you.
+
+### Fixed
+- The lure bait recipe was broken and didn't work at all.
+- Fixed a crash/disconnect that could happen when breaking a dummy that had Curios items equipped.
+- The DPS number no longer shows absurd values on the first hit of a streak.
+- Multiple hits landing together (a crit plus a bonus hit, for example) now show as a single number instead of several separate lines.
+
+### Changed
+- The dummy's hurt sound is now its own, instead of the game's generic one.
+- Updated the spawner and bait item icons.
+
 ## [1.2] - 2026-08-14
 
 ### Novidades

@@ -4,6 +4,7 @@
   "item.trainingdummy.dummy_spawner": "Dummy de Treino",
   "item.trainingdummy.dummy_spawner.tooltip.configure": "Clique direito com um Graveto para abrir o inventário dele",
   "item.trainingdummy.dummy_spawner.tooltip.remove": "Bata com um Graveto para remover",
+  "item.trainingdummy.dummy_spawner.tooltip.loaded": "Lembra o nome, vida e equipamentos dele",
   "item.trainingdummy.lure_bait": "Isca de Atração",
   "item.trainingdummy.lure_bait.tooltip": "Coloque na mão principal de um dummy para atrair mobs próximos a atacá-lo",
   "entity.trainingdummy.dummy": "Dummy de Treino",
@@ -13,6 +14,7 @@
   "trainingdummy.gui.location.screen": "Tela",
   "trainingdummy.gui.maxHealth": "Vida Máxima",
   "trainingdummy.gui.maxHealth.set": "Definir",
+  "trainingdummy.gui.clearNegativeEffects": "Remover Efeitos Negativos",
 
   "trainingdummy.slot.head": "Capacete",
   "trainingdummy.slot.chest": "Peitoral",

@@ -7,11 +7,6 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 
-/**
- * Sent client -> server when the player edits the max health field in the dummy's inventory
- * screen. {@code maxHealth <= 0} clears the per-dummy override, going back to the global
- * {@code CommonConfig#MAX_HEALTH} default - see entity.DummyEntity#setMaxHealthOverride.
- */
 public record DummySetMaxHealthPayload(int dummyEntityId, double maxHealth) implements CustomPacketPayload {
 
     public static final Type<DummySetMaxHealthPayload> TYPE =
