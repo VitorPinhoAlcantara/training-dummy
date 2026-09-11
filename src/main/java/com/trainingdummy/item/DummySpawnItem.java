@@ -1,14 +1,17 @@
 package com.trainingdummy.item;
 
 import com.trainingdummy.curios.CuriosCompat;
+import com.trainingdummy.entity.DummyDisplayMetric;
 import com.trainingdummy.entity.DummyEntity;
 import com.trainingdummy.registry.ModDataComponents;
 import com.trainingdummy.registry.ModEntities;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentUtils;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.entity.EntitySpawnReason;
@@ -38,10 +41,60 @@ public class DummySpawnItem extends Item {
                 .withStyle(ChatFormatting.GRAY));
         tooltip.accept(Component.translatable("item.trainingdummy.dummy_spawner.tooltip.remove")
                 .withStyle(ChatFormatting.GRAY));
-        if (stack.has(ModDataComponents.DUMMY_DATA.get())) {
-            tooltip.accept(Component.translatable("item.trainingdummy.dummy_spawner.tooltip.loaded")
-                    .withStyle(ChatFormatting.GRAY));
+
+        DummyStoredData stored = stack.get(ModDataComponents.DUMMY_DATA.get());
+        if (stored == null) {
+            return;
         }
+        tooltip.accept(Component.translatable("item.trainingdummy.dummy_spawner.tooltip.loaded")
+                .withStyle(ChatFormatting.GRAY));
+
+        if (Minecraft.getInstance().hasControlDown()) {
+            appendCustomizationDetails(stored, tooltip);
+        } else {
+            tooltip.accept(Component.translatable("item.trainingdummy.dummy_spawner.tooltip.holdCtrl")
+                    .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
+        }
+    }
+
+    private static void appendCustomizationDetails(DummyStoredData stored, Consumer<Component> tooltip) {
+        if (stored.maxHealthOverride() > 0.0D) {
+            tooltip.accept(Component.translatable("item.trainingdummy.dummy_spawner.tooltip.maxHealth",
+                            String.valueOf((long) stored.maxHealthOverride()))
+                    .withStyle(ChatFormatting.AQUA));
+        }
+        if (stored.displayMetricCustomized()) {
+            tooltip.accept(Component.translatable("item.trainingdummy.dummy_spawner.tooltip.displayMetric",
+                            Component.translatable(metricNameKey(stored.displayMetric())))
+                    .withStyle(ChatFormatting.AQUA));
+        }
+
+        List<Component> armorNames = stored.equipment().stream()
+                .filter(item -> !item.isEmpty())
+                .map(ItemStack::getHoverName)
+                .toList();
+        if (!armorNames.isEmpty()) {
+            tooltip.accept(Component.translatable("item.trainingdummy.dummy_spawner.tooltip.equipment",
+                            ComponentUtils.formatList(armorNames, Component.literal(", ")))
+                    .withStyle(ChatFormatting.AQUA));
+        }
+
+        if (!stored.curios().isEmpty()) {
+            List<Component> curioNames = stored.curios().stream()
+                    .map(entry -> entry.stack().getHoverName())
+                    .toList();
+            tooltip.accept(Component.translatable("item.trainingdummy.dummy_spawner.tooltip.curios",
+                            ComponentUtils.formatList(curioNames, Component.literal(", ")))
+                    .withStyle(ChatFormatting.AQUA));
+        }
+    }
+
+    private static String metricNameKey(DummyDisplayMetric metric) {
+        return switch (metric) {
+            case DPS -> "trainingdummy.display.dps.name";
+            case PER_HIT -> "trainingdummy.display.perhit.name";
+            case TOTAL -> "trainingdummy.display.total.name";
+        };
     }
 
     @Override
@@ -83,6 +136,9 @@ public class DummySpawnItem extends Item {
 
         if (stored != null) {
             dummy.setMaxHealthOverride(stored.maxHealthOverride());
+            if (stored.displayMetricCustomized()) {
+                dummy.setDisplayMetric(stored.displayMetric());
+            }
             List<ItemStack> equipment = stored.equipment();
             List<EquipmentSlot> slots = EquipmentSlot.VALUES;
             for (int i = 0; i < slots.size() && i < equipment.size(); i++) {

@@ -1,6 +1,7 @@
 package com.trainingdummy.menu;
 
 import com.trainingdummy.curios.CuriosCompat;
+import com.trainingdummy.entity.DummyDisplayMetric;
 import com.trainingdummy.entity.DummyEntity;
 import com.trainingdummy.registry.ModMenus;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -55,17 +56,23 @@ public class DummyMenu extends AbstractContainerMenu {
     public final int playerInvY;
     public final int imageWidth;
     public final int imageHeight;
+    public final DummyDisplayMetric displayMetric;
+    public final boolean displayMetricCustomized;
 
     private final DummyEntity dummy;
     private final EquipmentContainer equipmentContainer;
 
     public DummyMenu(int containerId, Inventory playerInventory, DummyEntity dummy) {
-        this(containerId, playerInventory, dummy, dummy.getCuriosPage());
+        this(containerId, playerInventory, dummy, dummy.getCuriosPage(),
+                dummy.getDisplayMetric(), dummy.isDisplayMetricCustomized());
     }
 
-    public DummyMenu(int containerId, Inventory playerInventory, DummyEntity dummy, int requestedPage) {
+    public DummyMenu(int containerId, Inventory playerInventory, DummyEntity dummy, int requestedPage,
+                      DummyDisplayMetric displayMetric, boolean displayMetricCustomized) {
         super(ModMenus.DUMMY_MENU.get(), containerId);
         this.dummy = dummy;
+        this.displayMetric = displayMetric;
+        this.displayMetricCustomized = displayMetricCustomized;
         this.equipmentContainer = new EquipmentContainer(dummy);
 
         this.curiosTotalSlotCount = CuriosCompat.isLoaded() ? CuriosCompat.slotCount(dummy) : 0;
@@ -107,7 +114,8 @@ public class DummyMenu extends AbstractContainerMenu {
     }
 
     public DummyMenu(int containerId, Inventory playerInventory, RegistryFriendlyByteBuf buf) {
-        this(containerId, playerInventory, resolveDummy(playerInventory, buf.readVarInt()), buf.readVarInt());
+        this(containerId, playerInventory, resolveDummy(playerInventory, buf.readVarInt()), buf.readVarInt(),
+                buf.readEnum(DummyDisplayMetric.class), buf.readBoolean());
     }
 
     private static DummyEntity resolveDummy(Inventory playerInventory, int entityId) {

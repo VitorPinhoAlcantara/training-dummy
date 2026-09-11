@@ -7,6 +7,7 @@ import com.trainingdummy.entity.DummyEntity;
 import com.trainingdummy.network.DummyClearNegativeEffectsPayload;
 import com.trainingdummy.network.DummyCuriosPagePayload;
 import com.trainingdummy.network.DummyDamagePayload;
+import com.trainingdummy.network.DummySetDisplayMetricPayload;
 import com.trainingdummy.network.DummySetMaxHealthPayload;
 import com.trainingdummy.network.ServerPayloadHandler;
 import com.trainingdummy.registry.ModCreativeTabs;
@@ -70,13 +71,16 @@ public class TrainingDummyMod {
     }
 
     private void registerPayloads(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar registrar = event.registrar("1").optional();
+        // Bumped from "1": DummyDamagePayload's wire format changed (added the metric field) in v1.4.
+        PayloadRegistrar registrar = event.registrar("2").optional();
         registrar.playToClient(DummyDamagePayload.TYPE, DummyDamagePayload.STREAM_CODEC,
                 com.trainingdummy.client.ClientPayloadHandler::handleDummyDamage);
         registrar.playToServer(DummyCuriosPagePayload.TYPE, DummyCuriosPagePayload.STREAM_CODEC,
                 ServerPayloadHandler::handleCuriosPage);
         registrar.playToServer(DummySetMaxHealthPayload.TYPE, DummySetMaxHealthPayload.STREAM_CODEC,
                 ServerPayloadHandler::handleSetMaxHealth);
+        registrar.playToServer(DummySetDisplayMetricPayload.TYPE, DummySetDisplayMetricPayload.STREAM_CODEC,
+                ServerPayloadHandler::handleSetDisplayMetric);
         registrar.playToServer(DummyClearNegativeEffectsPayload.TYPE, DummyClearNegativeEffectsPayload.STREAM_CODEC,
                 ServerPayloadHandler::handleClearNegativeEffects);
     }

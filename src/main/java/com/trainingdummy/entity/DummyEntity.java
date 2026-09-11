@@ -42,6 +42,7 @@ import net.neoforged.neoforge.common.NeoForgeMod;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class DummyEntity extends LivingEntity {
@@ -53,6 +54,9 @@ public class DummyEntity extends LivingEntity {
     private int curiosPage = 0;
 
     private double maxHealthOverride = -1.0D;
+
+    private DummyDisplayMetric displayMetric = DummyDisplayMetric.TOTAL;
+    private boolean displayMetricCustomized = false;
 
     public DummyEntity(EntityType<? extends DummyEntity> type, Level level) {
         super(type, level);
@@ -80,6 +84,19 @@ public class DummyEntity extends LivingEntity {
     public void setMaxHealthOverride(double value) {
         this.maxHealthOverride = value > 0.0D ? Math.min(value, 1_000_000_000.0D) : -1.0D;
         this.applyMaxHealth();
+    }
+
+    public DummyDisplayMetric getDisplayMetric() {
+        return this.displayMetric;
+    }
+
+    public boolean isDisplayMetricCustomized() {
+        return this.displayMetricCustomized;
+    }
+
+    public void setDisplayMetric(DummyDisplayMetric metric) {
+        this.displayMetric = metric;
+        this.displayMetricCustomized = true;
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -155,7 +172,8 @@ public class DummyEntity extends LivingEntity {
             equipment.add(this.getItemBySlot(slot).copy());
         }
         List<DummyCurioEntry> curios = CuriosCompat.isLoaded() ? CuriosCompat.captureAll(this) : List.of();
-        DummyStoredData stored = new DummyStoredData(this.maxHealthOverride, equipment, curios);
+        DummyStoredData stored = new DummyStoredData(this.maxHealthOverride, equipment, curios,
+                this.displayMetric, this.displayMetricCustomized);
 
         ItemStack spawnerStack = new ItemStack(ModItems.DUMMY_SPAWNER.get());
         if (this.getCustomName() != null && !this.getCustomName().equals(DEFAULT_NAME)) {
@@ -228,6 +246,8 @@ public class DummyEntity extends LivingEntity {
         ), buf -> {
             buf.writeVarInt(this.getId());
             buf.writeVarInt(this.curiosPage);
+            buf.writeEnum(this.displayMetric);
+            buf.writeBoolean(this.displayMetricCustomized);
         });
     }
 
@@ -266,6 +286,9 @@ public class DummyEntity extends LivingEntity {
         if (this.maxHealthOverride > 0.0D) {
             output.putDouble("MaxHealthOverride", this.maxHealthOverride);
         }
+        if (this.displayMetricCustomized) {
+            output.putString("DisplayMetric", this.displayMetric.name());
+        }
     }
 
     @Override
@@ -273,5 +296,16 @@ public class DummyEntity extends LivingEntity {
         super.readAdditionalSaveData(input);
         this.maxHealthOverride = input.getDoubleOr("MaxHealthOverride", -1.0D);
         this.applyMaxHealth();
+        Optional<String> savedMetric = input.getString("DisplayMetric");
+        this.displayMetricCustomized = savedMetric.isPresent();
+        this.displayMetric = savedMetric.map(DummyEntity::parseDisplayMetric).orElse(DummyDisplayMetric.TOTAL);
+    }
+
+    private static DummyDisplayMetric parseDisplayMetric(String name) {
+        try {
+            return DummyDisplayMetric.valueOf(name);
+        } catch (IllegalArgumentException e) {
+            return DummyDisplayMetric.TOTAL;
+        }
     }
 }
