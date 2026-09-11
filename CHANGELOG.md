@@ -2,6 +2,19 @@
 
 All notable changes to this mod are documented here.
 
+## [1.4] - 2026-09-11
+
+### New
+- New "Per Hit" display option, alongside Total and DPS — shows just the damage of the last hit, without summing or averaging.
+- Damage display (Total/DPS/Per Hit) is now a setting on each individual dummy instead of a shared client setting — different dummies can show different metrics, set from that dummy's own inventory screen.
+- The loaded spawner item's tooltip now shows a Ctrl-held breakdown of what's actually customized on that dummy (health, damage display, armor, curios).
+
+### Fixed
+- Hitting two dummies back and forth no longer mixes their damage totals into one streak — each dummy now tracks its own hits independently.
+
+### Changed
+- Removed the global "Display metric" client config option, since it's now set per dummy instead.
+
 ## [1.3] - 2026-08-19
 
 ### New
