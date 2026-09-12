@@ -193,9 +193,19 @@ public class DummyEntity extends LivingEntity {
         }
     }
 
+    private static final java.util.Map<String, java.util.function.Supplier<SoundEvent>> NAMED_HURT_SOUNDS = java.util.Map.of(
+            "Danrique", ModSounds.DANRIQUE_HURT,
+            "MitinhoPlayer", ModSounds.MITINHOPLAYER_HURT,
+            "Nofaxu", ModSounds.NOFAXU_HURT,
+            "BrunimNeets", ModSounds.BRUNIMNEETS_HURT,
+            "mamao170", ModSounds.MAMAO170_HURT,
+            "JazaraGamer", ModSounds.JAZARAGAMER_HURT
+    );
+
     @Override
     protected SoundEvent getHurtSound(DamageSource source) {
-        return ModSounds.DUMMY_HURT.get();
+        java.util.function.Supplier<SoundEvent> named = NAMED_HURT_SOUNDS.get(this.getSkinName());
+        return named != null ? named.get() : ModSounds.DUMMY_HURT.get();
     }
 
     @Override

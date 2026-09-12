@@ -2,6 +2,11 @@
 
 All notable changes to this mod are documented here.
 
+## [1.5] - 2026-09-12
+
+### New
+- Added a few hidden easter eggs — some dummies will play a special hurt sound instead of the usual one.
+
 ## [1.4] - 2026-09-11
 
 ### New
