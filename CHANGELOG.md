@@ -4,28 +4,28 @@ All notable changes to this mod are documented here.
 
 ## [1.5] - 2026-09-15
 
-Porte das versões 1.3, 1.4 e 1.5 (já lançadas no branch 26.1.2) para o Minecraft 1.21.1, mais algumas mudanças pequenas feitas durante esse porte.
+Ports versions 1.3, 1.4 and 1.5 (already released on the 26.1.2 branch) to Minecraft 1.21.1, plus a few small changes made while doing that port.
 
-### Novidades
-- Quebrar um dummy agora guarda seu nome, vida configurada, armadura e curios no próprio item spawner — colocá-lo de volta recria o dummy exatamente como estava.
-- O item spawner pode ser renomeado numa bigorna para definir o nome do dummy que ele cria.
-- Isca de atração agora tem prioridade sobre o jogador como alvo, mesmo que o mob já esteja te atacando.
-- Nova opção de exibição de dano "Por Acerto", além de Total e DPS.
-- A métrica de exibição (Total/DPS/Por Acerto) agora é configurada por dummy individualmente, em vez de ser uma config global do cliente.
-- O tooltip do spawner carregado mostra, segurando Ctrl, o que foi de fato personalizado naquele dummy (vida, dano, armadura, curios).
-- Alguns apelidos específicos tocam um som de hit próprio (easter egg).
-- Colocar um único Dummy Spawner carregado, sozinho, em qualquer grade de crafting agora o "reseta": mantém armadura/curios guardados, mas limpa vida customizada, métrica de dano e nome.
+### New
+- Breaking a dummy now saves its name, configured health, armor and curios onto its own spawner item - placing it back down recreates the dummy just as it was.
+- The spawner item can be renamed in an anvil to set the name of the dummy it creates.
+- Lure bait now takes priority over the player as a target, even if the mob is already attacking you.
+- New "Per Hit" damage display option, alongside Total and DPS.
+- The display metric (Total/DPS/Per Hit) is now configured per dummy individually, instead of being a global client setting.
+- The loaded spawner item's tooltip shows, while holding Ctrl, what's actually customized on that dummy (health, damage display, armor, curios).
+- A few specific nicknames play their own hit sound (easter egg).
+- Placing a single loaded Dummy Spawner alone in any crafting grid now "resets" it: keeps the equipment/curios it remembers, but clears its customized health, damage display, and name.
 
-### Correções
-- A receita da isca de atração, que estava quebrada.
-- Um crash/desconexão ao quebrar um dummy com itens do Curios equipados.
-- O número de DPS não mostra mais valores absurdos no primeiro acerto de uma sequência.
-- Vários acertos no mesmo tick agora aparecem como um número só, em vez de várias linhas.
-- Layout do inventário do dummy, que sobrepunha o rótulo "Inventory" e os primeiros slots.
+### Fixed
+- The lure bait recipe, which was broken.
+- A crash/disconnect that could happen when breaking a dummy that had Curios items equipped.
+- The DPS number no longer shows absurd values on the first hit of a streak.
+- Multiple hits landing in the same tick now show as a single number instead of several lines.
+- The dummy's inventory layout, which was overlapping the "Inventory" label and the first slots.
 
-### Mudanças
-- O botão "Limpar Efeitos Negativos" virou "Clear Effects" e agora remove todos os efeitos ativos (bons e ruins), não só os negativos.
-- Removida a config global de métrica de exibição, já que agora é definida por dummy.
+### Changed
+- The "Clear Negative Effects" button is now "Clear Effects" and removes every active effect (positive and negative), not just harmful ones.
+- Removed the global display metric config, since it's now set per dummy instead.
 
 ## [1.2] - 2026-08-14
 
