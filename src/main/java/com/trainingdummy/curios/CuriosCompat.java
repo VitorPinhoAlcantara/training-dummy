@@ -1,6 +1,8 @@
 package com.trainingdummy.curios;
 
+import com.mojang.datafixers.util.Pair;
 import com.trainingdummy.entity.DummyEntity;
+import com.trainingdummy.item.DummyCurioEntry;
 import com.trainingdummy.menu.DummyMenu;
 import com.trainingdummy.menu.SlotTooltip;
 import net.minecraft.network.chat.Component;
@@ -15,6 +17,9 @@ import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.type.ISlotType;
 import top.theillusivec4.curios.api.type.capability.ICuriosItemHandler;
 import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Everything that touches Curios classes lives in this file, and every entry point here is only
@@ -55,10 +60,7 @@ public final class CuriosCompat {
                     int col = local % columns;
                     int row = local / columns;
                     NamedCurioSlot slot = new NamedCurioSlot(stacksHandler.getStacks(), i,
-                            x + col * 18, y + row * 18, name);
-                    if (icon != null) {
-                        slot.setBackground(InventoryMenu.BLOCK_ATLAS, icon);
-                    }
+                            x + col * 18, y + row * 18, name, icon);
                     menu.addCurioSlot(slot);
                 }
             }
@@ -72,17 +74,41 @@ public final class CuriosCompat {
         return CuriosApi.getCuriosInventory(dummy).map(ICuriosItemHandler::getSlots).orElse(0);
     }
 
-    /** Drops every equipped curio into the world at the dummy's position (called when it's broken with a stick). */
-    public static void dropAll(DummyEntity dummy) {
+    /** Captures every equipped curio, for folding into the dummy's spawner item when it's broken. */
+    public static List<DummyCurioEntry> captureAll(DummyEntity dummy) {
+        List<DummyCurioEntry> result = new ArrayList<>();
         CuriosApi.getCuriosInventory(dummy).ifPresent(handler -> {
             for (ICurioStacksHandler stacksHandler : handler.getCurios().values()) {
                 IItemHandlerModifiable stacks = stacksHandler.getStacks();
+                String identifier = stacksHandler.getIdentifier();
                 for (int i = 0; i < stacks.getSlots(); i++) {
                     ItemStack stack = stacks.getStackInSlot(i);
                     if (!stack.isEmpty()) {
-                        dummy.spawnAtLocation(stack.copy());
-                        stacks.setStackInSlot(i, ItemStack.EMPTY);
+                        result.add(new DummyCurioEntry(identifier, i, stack.copy()));
                     }
+                }
+            }
+        });
+        return result;
+    }
+
+    /**
+     * Restores curios captured by {@link #captureAll} onto a freshly placed dummy. If a slot type
+     * no longer exists (a relic granting it was removed since capture), the item is dropped at the
+     * dummy's feet instead of silently disappearing.
+     */
+    public static void restoreAll(DummyEntity dummy, List<DummyCurioEntry> entries) {
+        if (entries.isEmpty()) {
+            return;
+        }
+        CuriosApi.getCuriosInventory(dummy).ifPresent(handler -> {
+            for (DummyCurioEntry entry : entries) {
+                ICurioStacksHandler stacksHandler = handler.getCurios().get(entry.identifier());
+                IItemHandlerModifiable stacks = stacksHandler != null ? stacksHandler.getStacks() : null;
+                if (stacks != null && entry.slot() < stacks.getSlots()) {
+                    stacks.setStackInSlot(entry.slot(), entry.stack().copy());
+                } else {
+                    dummy.spawnAtLocation(entry.stack().copy());
                 }
             }
         });
@@ -98,10 +124,13 @@ public final class CuriosCompat {
     private static final class NamedCurioSlot extends SlotItemHandler implements SlotTooltip {
 
         private final Component tooltipName;
+        private final ResourceLocation icon;
 
-        private NamedCurioSlot(IItemHandlerModifiable handler, int index, int x, int y, Component tooltipName) {
+        private NamedCurioSlot(IItemHandlerModifiable handler, int index, int x, int y, Component tooltipName,
+                                ResourceLocation icon) {
             super(handler, index, x, y);
             this.tooltipName = tooltipName;
+            this.icon = icon;
         }
 
         private boolean indexStillValid() {
@@ -121,6 +150,11 @@ public final class CuriosCompat {
         @Override
         public boolean mayPickup(Player player) {
             return this.indexStillValid() && super.mayPickup(player);
+        }
+
+        @Override
+        public Pair<ResourceLocation, ResourceLocation> getNoItemIcon() {
+            return this.icon != null ? Pair.of(InventoryMenu.BLOCK_ATLAS, this.icon) : null;
         }
 
         @Override

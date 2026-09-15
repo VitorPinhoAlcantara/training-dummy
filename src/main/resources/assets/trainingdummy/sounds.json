@@ -1,0 +1,40 @@
+{
+  "entity.dummy.hurt": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.generic.hurt",
+        "type": "event"
+      }
+    ]
+  },
+  "entity.dummy.danrique_hurt": {
+    "sounds": [
+      "trainingdummy:danrique_hurt"
+    ]
+  },
+  "entity.dummy.mitinhoplayer_hurt": {
+    "sounds": [
+      "trainingdummy:mitinhoplayer_hurt"
+    ]
+  },
+  "entity.dummy.nofaxu_hurt": {
+    "sounds": [
+      "trainingdummy:nofaxu_hurt"
+    ]
+  },
+  "entity.dummy.brunimneets_hurt": {
+    "sounds": [
+      "trainingdummy:brunimneets_hurt"
+    ]
+  },
+  "entity.dummy.mamao170_hurt": {
+    "sounds": [
+      "trainingdummy:mamao170_hurt"
+    ]
+  },
+  "entity.dummy.jazaragamer_hurt": {
+    "sounds": [
+      "trainingdummy:jazaragamer_hurt"
+    ]
+  }
+}

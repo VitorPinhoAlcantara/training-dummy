@@ -4,6 +4,7 @@
   "item.trainingdummy.dummy_spawner": "Dummy de Treino",
   "item.trainingdummy.dummy_spawner.tooltip.configure": "Clique direito com um Graveto para abrir o inventário dele",
   "item.trainingdummy.dummy_spawner.tooltip.remove": "Bata com um Graveto para remover",
+  "item.trainingdummy.dummy_spawner.tooltip.loaded": "Lembra o nome, vida e equipamentos dele",
   "item.trainingdummy.lure_bait": "Isca de Atração",
   "item.trainingdummy.lure_bait.tooltip": "Coloque na mão principal de um dummy para atrair mobs próximos a atacá-lo",
   "entity.trainingdummy.dummy": "Dummy de Treino",
@@ -13,6 +14,7 @@
   "trainingdummy.gui.location.screen": "Tela",
   "trainingdummy.gui.maxHealth": "Vida Máxima",
   "trainingdummy.gui.maxHealth.set": "Definir",
+  "trainingdummy.gui.clearEffects": "Remover Efeitos",
 
   "trainingdummy.slot.head": "Capacete",
   "trainingdummy.slot.chest": "Peitoral",
@@ -30,8 +32,6 @@
   "trainingdummy.configuration.displayDurationSeconds.tooltip": "Por quanto tempo o dano fica visível na tela após o último acerto.",
   "trainingdummy.configuration.displayLocation": "Local de exibição",
   "trainingdummy.configuration.displayLocation.tooltip": "Onde mostrar o dano: na tela (HUD) ou no seu próprio chat.",
-  "trainingdummy.configuration.displayMetric": "Métrica de exibição",
-  "trainingdummy.configuration.displayMetric.tooltip": "Mostra o dano total da sequência atual, ou a taxa de dano por segundo.",
   "trainingdummy.configuration.section.trainingdummy.common.toml": "Jogabilidade",
   "trainingdummy.configuration.section.trainingdummy.common.toml.title": "Jogabilidade",
   "trainingdummy.configuration.baitRadius": "Raio da isca de atração (blocos)",
@@ -47,6 +47,14 @@
 
   "trainingdummy.display.total": "%s de dano",
   "trainingdummy.display.dps": "%s DPS",
+  "trainingdummy.display.perhit": "%s por acerto",
   "trainingdummy.display.total.name": "Total",
-  "trainingdummy.display.dps.name": "DPS"
+  "trainingdummy.display.dps.name": "DPS",
+  "trainingdummy.display.perhit.name": "Por Acerto",
+
+  "item.trainingdummy.dummy_spawner.tooltip.holdCtrl": "Segure Ctrl para ver os detalhes de personalização",
+  "item.trainingdummy.dummy_spawner.tooltip.maxHealth": "Vida Máxima: %s",
+  "item.trainingdummy.dummy_spawner.tooltip.displayMetric": "Exibição de Dano: %s",
+  "item.trainingdummy.dummy_spawner.tooltip.equipment": "Equipamento: %s",
+  "item.trainingdummy.dummy_spawner.tooltip.curios": "Curios: %s"
 }

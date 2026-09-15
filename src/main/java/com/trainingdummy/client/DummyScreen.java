@@ -1,9 +1,12 @@
 package com.trainingdummy.client;
 
 import com.trainingdummy.config.ClientConfig;
+import com.trainingdummy.entity.DummyDisplayMetric;
 import com.trainingdummy.menu.DummyMenu;
 import com.trainingdummy.menu.SlotTooltip;
+import com.trainingdummy.network.DummyClearEffectsPayload;
 import com.trainingdummy.network.DummyCuriosPagePayload;
+import com.trainingdummy.network.DummySetDisplayMetricPayload;
 import com.trainingdummy.network.DummySetMaxHealthPayload;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -28,6 +31,7 @@ public class DummyScreen extends AbstractContainerScreen<DummyMenu> {
     private static final int LABEL_COLOR = 0xFF404040;
 
     private EditBox maxHealthBox;
+    private DummyDisplayMetric displayMetric;
 
     public DummyScreen(DummyMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
@@ -37,6 +41,7 @@ public class DummyScreen extends AbstractContainerScreen<DummyMenu> {
         this.titleLabelY = 6;
         this.inventoryLabelX = DummyMenu.PLAYER_INV_X;
         this.inventoryLabelY = menu.playerInvY - 10;
+        this.displayMetric = menu.displayMetric;
     }
 
     @Override
@@ -54,11 +59,11 @@ public class DummyScreen extends AbstractContainerScreen<DummyMenu> {
         int controlsX = this.leftPos + DummyMenu.ARMOR_X;
         int controlsY = this.topPos + DummyMenu.CONTROLS_Y;
 
-        this.addRenderableWidget(Button.builder(metricLabel(), b -> {
-            ClientConfig.DisplayMetric next = ClientConfig.DISPLAY_METRIC.get() == ClientConfig.DisplayMetric.TOTAL
-                    ? ClientConfig.DisplayMetric.DPS : ClientConfig.DisplayMetric.TOTAL;
-            ClientConfig.DISPLAY_METRIC.set(next);
-            b.setMessage(metricLabel());
+        this.addRenderableWidget(Button.builder(this.metricLabel(), b -> {
+            this.displayMetric = this.displayMetric.next();
+            PacketDistributor.sendToServer(
+                    new DummySetDisplayMetricPayload(this.menu.getDummy().getId(), this.displayMetric));
+            b.setMessage(this.metricLabel());
         }).bounds(controlsX, controlsY, 80, 16).build());
 
         this.addRenderableWidget(Button.builder(locationLabel(), b -> {
@@ -78,11 +83,20 @@ public class DummyScreen extends AbstractContainerScreen<DummyMenu> {
 
         this.addRenderableWidget(Button.builder(Component.translatable("trainingdummy.gui.maxHealth.set"),
                 b -> this.submitMaxHealth()).bounds(controlsX + 104, fieldY, 60, 16).build());
+
+        int effectsY = fieldY + 20;
+        this.addRenderableWidget(Button.builder(Component.translatable("trainingdummy.gui.clearEffects"),
+                b -> PacketDistributor.sendToServer(new DummyClearEffectsPayload(this.menu.getDummy().getId())))
+                .bounds(controlsX, effectsY, 164, 16).build());
     }
 
-    private static Component metricLabel() {
-        return Component.translatable(ClientConfig.DISPLAY_METRIC.get() == ClientConfig.DisplayMetric.DPS
-                ? "trainingdummy.display.dps.name" : "trainingdummy.display.total.name");
+    private Component metricLabel() {
+        String key = switch (this.displayMetric) {
+            case DPS -> "trainingdummy.display.dps.name";
+            case PER_HIT -> "trainingdummy.display.perhit.name";
+            case TOTAL -> "trainingdummy.display.total.name";
+        };
+        return Component.translatable(key);
     }
 
     private static Component locationLabel() {

@@ -15,11 +15,6 @@ public final class ClientConfig {
         CHAT
     }
 
-    public enum DisplayMetric {
-        TOTAL,
-        DPS
-    }
-
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
 
     public static final ModConfigSpec.DoubleValue HIT_RESET_SECONDS = BUILDER
@@ -33,10 +28,6 @@ public final class ClientConfig {
     public static final ModConfigSpec.EnumValue<DisplayLocation> DISPLAY_LOCATION = BUILDER
             .comment("Where to show the damage readout: SCREEN (HUD overlay) or CHAT (local chat message).")
             .defineEnum("displayLocation", DisplayLocation.CHAT);
-
-    public static final ModConfigSpec.EnumValue<DisplayMetric> DISPLAY_METRIC = BUILDER
-            .comment("TOTAL shows the summed damage of the current streak; DPS shows that sum divided by the streak's elapsed time.")
-            .defineEnum("displayMetric", DisplayMetric.TOTAL);
 
     public static final ModConfigSpec.IntValue DISPLAY_OFFSET_X = BUILDER
             .comment("SCREEN readout only. Horizontal pixel offset from the center of the screen (negative = left, positive = right). Useful if another mod's HUD element sits where the readout would otherwise be.")

@@ -1,20 +1,32 @@
 package com.trainingdummy.client;
 
+import com.trainingdummy.TrainingDummyMod;
 import com.trainingdummy.config.ClientConfig;
+import com.trainingdummy.entity.DummyDisplayMetric;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Client-side only. Every hit adds to a running total ("streak"). If more than
  * hitResetSeconds pass without a hit, the next hit starts a fresh streak instead of adding to
  * the old one. displayDurationSeconds controls how long the number stays visible after the last
- * hit. Both are client config so they (and the SCREEN/CHAT, TOTAL/DPS presets) can be tuned live.
+ * hit. Both are client config so they (and the SCREEN/CHAT presets) can be tuned live. The
+ * TOTAL/DPS/PER_HIT metric itself is a per-dummy setting instead (see entity.DummyDisplayMetric),
+ * and each dummy's streak is tracked independently so alternating hits between two dummies
+ * doesn't mix their totals together.
  */
+@EventBusSubscriber(modid = TrainingDummyMod.MODID, value = Dist.CLIENT)
 public final class ClientDamageTracker {
 
     /** "." for the thousands/millions/... groups, "," for the decimal - e.g. 1.234.567,8. */
@@ -27,70 +39,111 @@ public final class ClientDamageTracker {
         NUMBER_FORMAT = new DecimalFormat("#,##0.0", symbols);
     }
 
-    private static float streakTotal = 0.0F;
-    private static long streakStartTick = Long.MIN_VALUE;
-    private static long lastHitTick = Long.MIN_VALUE;
+    private static final double MIN_DPS_WINDOW_SECONDS = 1.0D;
 
-    /**
-     * Frozen at the moment of the last hit, rather than recomputed every frame - DPS in
-     * particular is total/elapsed-time, so recalculating it every single frame while nothing new
-     * happens made it drift up and down continuously and was unreadable. It only needs to change
-     * when there's actually a new hit to reflect.
-     */
-    private static Component lastMessage = null;
+    // How long a dummy's tracker state is kept around after its last hit, regardless of the
+    // configured display duration - just generous headroom so the map doesn't grow forever
+    // while still surviving a brief pause between hits.
+    private static final double STATE_EXPIRY_SECONDS = 30.0D;
 
-    public static void recordHit(int dummyId, float amount) {
+    private static final Map<Integer, PerDummyState> STATES = new ConcurrentHashMap<>();
+
+    private static int lastActiveDummyId = -1;
+
+    public static void recordHit(int dummyId, float amount, DummyDisplayMetric metric) {
         long now = currentTick();
         double resetTicks = ClientConfig.HIT_RESET_SECONDS.get() * 20.0D;
 
-        if (lastHitTick == Long.MIN_VALUE || now - lastHitTick > resetTicks) {
-            streakTotal = 0.0F;
-            streakStartTick = now;
+        PerDummyState state = STATES.computeIfAbsent(dummyId, id -> new PerDummyState());
+        if (state.lastHitTick == Long.MIN_VALUE || now - state.lastHitTick > resetTicks) {
+            state.streakTotal = 0.0F;
+            state.streakStartTick = now;
         }
-        streakTotal += amount;
-        lastHitTick = now;
-        lastMessage = formatMessage(currentMetricValue(now));
+        state.streakTotal += amount;
+        state.lastHitAmount = amount;
+        state.lastHitTick = now;
+        state.metric = metric;
+        state.pendingFlush = true;
 
-        if (ClientConfig.DISPLAY_LOCATION.get() == ClientConfig.DisplayLocation.CHAT) {
-            Minecraft mc = Minecraft.getInstance();
-            if (mc.player != null) {
-                mc.gui.getChat().addMessage(lastMessage);
+        lastActiveDummyId = dummyId;
+    }
+
+    @SubscribeEvent
+    static void onClientTick(ClientTickEvent.Post event) {
+        long now = currentTick();
+
+        for (var it = STATES.entrySet().iterator(); it.hasNext(); ) {
+            Map.Entry<Integer, PerDummyState> entry = it.next();
+            PerDummyState state = entry.getValue();
+            if (now - state.lastHitTick > STATE_EXPIRY_SECONDS * 20.0D) {
+                it.remove();
+                continue;
+            }
+            if (state.pendingFlush) {
+                state.pendingFlush = false;
+                state.lastMessage = formatMessage(currentMetricValue(state, now), state.metric);
+
+                if (ClientConfig.DISPLAY_LOCATION.get() == ClientConfig.DisplayLocation.CHAT) {
+                    Minecraft mc = Minecraft.getInstance();
+                    if (mc.player != null) {
+                        mc.gui.getChat().addMessage(state.lastMessage);
+                    }
+                }
             }
         }
     }
 
     /** Value to show on the HUD overlay this frame, or empty if nothing should be shown. */
     public static Optional<Component> currentHudMessage() {
-        if (ClientConfig.DISPLAY_LOCATION.get() != ClientConfig.DisplayLocation.SCREEN || lastHitTick == Long.MIN_VALUE) {
+        if (ClientConfig.DISPLAY_LOCATION.get() != ClientConfig.DisplayLocation.SCREEN || lastActiveDummyId == -1) {
+            return Optional.empty();
+        }
+        PerDummyState state = STATES.get(lastActiveDummyId);
+        if (state == null) {
             return Optional.empty();
         }
         long now = currentTick();
         double displayDurationTicks = ClientConfig.DISPLAY_DURATION_SECONDS.get() * 20.0D;
-        if (now - lastHitTick > displayDurationTicks) {
+        if (now - state.lastHitTick > displayDurationTicks) {
             return Optional.empty();
         }
-        return Optional.ofNullable(lastMessage);
+        return Optional.ofNullable(state.lastMessage);
     }
 
-    private static double currentMetricValue(long now) {
-        if (ClientConfig.DISPLAY_METRIC.get() == ClientConfig.DisplayMetric.DPS) {
-            double elapsedSeconds = Math.max((now - streakStartTick) / 20.0D, 0.05D);
-            return streakTotal / elapsedSeconds;
-        }
-        return streakTotal;
+    private static double currentMetricValue(PerDummyState state, long now) {
+        return switch (state.metric) {
+            case DPS -> {
+                double elapsedSeconds = Math.max((now - state.streakStartTick) / 20.0D, MIN_DPS_WINDOW_SECONDS);
+                yield state.streakTotal / elapsedSeconds;
+            }
+            case PER_HIT -> state.lastHitAmount;
+            case TOTAL -> state.streakTotal;
+        };
     }
 
-    private static Component formatMessage(double value) {
+    private static Component formatMessage(double value, DummyDisplayMetric metric) {
         String formatted = NUMBER_FORMAT.format(value);
-        String key = ClientConfig.DISPLAY_METRIC.get() == ClientConfig.DisplayMetric.DPS
-                ? "trainingdummy.display.dps"
-                : "trainingdummy.display.total";
+        String key = switch (metric) {
+            case DPS -> "trainingdummy.display.dps";
+            case PER_HIT -> "trainingdummy.display.perhit";
+            case TOTAL -> "trainingdummy.display.total";
+        };
         return Component.translatable(key, formatted);
     }
 
     private static long currentTick() {
         Minecraft mc = Minecraft.getInstance();
         return mc.level != null ? mc.level.getGameTime() : 0L;
+    }
+
+    private static final class PerDummyState {
+        float streakTotal = 0.0F;
+        long streakStartTick = Long.MIN_VALUE;
+        long lastHitTick = Long.MIN_VALUE;
+        float lastHitAmount = 0.0F;
+        DummyDisplayMetric metric = DummyDisplayMetric.TOTAL;
+        Component lastMessage;
+        boolean pendingFlush;
     }
 
     private ClientDamageTracker() {

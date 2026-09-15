@@ -1,6 +1,7 @@
 package com.trainingdummy.menu;
 
 import com.trainingdummy.curios.CuriosCompat;
+import com.trainingdummy.entity.DummyDisplayMetric;
 import com.trainingdummy.entity.DummyEntity;
 import com.trainingdummy.registry.ModMenus;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -61,7 +62,7 @@ public class DummyMenu extends AbstractContainerMenu {
      * around depending on how many accessory slots are equipped/available.
      */
     public static final int CONTROLS_Y = TOP_Y + ARMOR_HEIGHT + 6;
-    public static final int CONTROLS_HEIGHT = 40;
+    public static final int CONTROLS_HEIGHT = 60;
 
     public final int curiosTotalSlotCount;
     public final int curiosPageSlotCount;
@@ -70,17 +71,23 @@ public class DummyMenu extends AbstractContainerMenu {
     public final int playerInvY;
     public final int imageWidth;
     public final int imageHeight;
+    public final DummyDisplayMetric displayMetric;
+    public final boolean displayMetricCustomized;
 
     private final DummyEntity dummy;
     private final EquipmentContainer equipmentContainer;
 
     public DummyMenu(int containerId, Inventory playerInventory, DummyEntity dummy) {
-        this(containerId, playerInventory, dummy, dummy.getCuriosPage());
+        this(containerId, playerInventory, dummy, dummy.getCuriosPage(),
+                dummy.getDisplayMetric(), dummy.isDisplayMetricCustomized());
     }
 
-    public DummyMenu(int containerId, Inventory playerInventory, DummyEntity dummy, int requestedPage) {
+    public DummyMenu(int containerId, Inventory playerInventory, DummyEntity dummy, int requestedPage,
+                      DummyDisplayMetric displayMetric, boolean displayMetricCustomized) {
         super(ModMenus.DUMMY_MENU.get(), containerId);
         this.dummy = dummy;
+        this.displayMetric = displayMetric;
+        this.displayMetricCustomized = displayMetricCustomized;
         this.equipmentContainer = new EquipmentContainer(dummy);
 
         // Slot count is read fresh on every open/page-change, so a dummy whose curio count
@@ -102,7 +109,7 @@ public class DummyMenu extends AbstractContainerMenu {
             // armor slots only accept the matching piece.
             EquipmentSlot restrictTo = i >= HAND_SLOTS_START ? null : EQUIPMENT_ORDER[i];
             this.addSlot(new ArmorSlot(this.equipmentContainer, i, ARMOR_X, TOP_Y + i * SLOT_SIZE + gap,
-                    name, InventoryMenu.BLOCK_ATLAS, EQUIPMENT_ICONS[i], dummy, restrictTo));
+                    name, EQUIPMENT_ICONS[i], dummy, restrictTo));
         }
 
         if (this.curiosPageSlotCount > 0) {
@@ -127,7 +134,8 @@ public class DummyMenu extends AbstractContainerMenu {
     }
 
     public DummyMenu(int containerId, Inventory playerInventory, RegistryFriendlyByteBuf buf) {
-        this(containerId, playerInventory, resolveDummy(playerInventory, buf.readVarInt()), buf.readVarInt());
+        this(containerId, playerInventory, resolveDummy(playerInventory, buf.readVarInt()), buf.readVarInt(),
+                buf.readEnum(DummyDisplayMetric.class), buf.readBoolean());
     }
 
     private static DummyEntity resolveDummy(Inventory playerInventory, int entityId) {

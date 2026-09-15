@@ -29,7 +29,7 @@ public final class DummyCombatEvents {
         }
         float amount = event.getNewDamage();
         if (amount > 0.0F) {
-            PacketDistributor.sendToPlayer(attacker, new DummyDamagePayload(dummy.getId(), amount));
+            PacketDistributor.sendToPlayer(attacker, new DummyDamagePayload(dummy.getId(), amount, dummy.getDisplayMetric()));
         }
     }
 

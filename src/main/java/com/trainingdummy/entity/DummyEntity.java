@@ -2,13 +2,18 @@ package com.trainingdummy.entity;
 
 import com.trainingdummy.config.CommonConfig;
 import com.trainingdummy.curios.CuriosCompat;
+import com.trainingdummy.item.DummyCurioEntry;
+import com.trainingdummy.item.DummyStoredData;
 import com.trainingdummy.menu.DummyMenu;
+import com.trainingdummy.registry.ModDataComponents;
 import com.trainingdummy.registry.ModItems;
+import com.trainingdummy.registry.ModSounds;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -30,6 +35,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -48,6 +54,8 @@ public class DummyEntity extends LivingEntity {
 
     private static final int BAIT_SCAN_INTERVAL_TICKS = 20;
 
+    public static final Component DEFAULT_NAME = Component.translatable("entity.trainingdummy.dummy");
+
     private final NonNullList<ItemStack> handItems = NonNullList.withSize(2, ItemStack.EMPTY);
     private final NonNullList<ItemStack> armorItems = NonNullList.withSize(4, ItemStack.EMPTY);
 
@@ -65,6 +73,9 @@ public class DummyEntity extends LivingEntity {
      * use the global config default".
      */
     private double maxHealthOverride = -1.0D;
+
+    private DummyDisplayMetric displayMetric = DummyDisplayMetric.TOTAL;
+    private boolean displayMetricCustomized = false;
 
     public DummyEntity(EntityType<? extends DummyEntity> type, Level level) {
         super(type, level);
@@ -100,6 +111,19 @@ public class DummyEntity extends LivingEntity {
     public void setMaxHealthOverride(double value) {
         this.maxHealthOverride = value > 0.0D ? Math.min(value, 1_000_000_000.0D) : -1.0D;
         this.applyMaxHealth();
+    }
+
+    public DummyDisplayMetric getDisplayMetric() {
+        return this.displayMetric;
+    }
+
+    public boolean isDisplayMetricCustomized() {
+        return this.displayMetricCustomized;
+    }
+
+    public void setDisplayMetric(DummyDisplayMetric metric) {
+        this.displayMetric = metric;
+        this.displayMetricCustomized = true;
     }
 
     /**
@@ -161,8 +185,10 @@ public class DummyEntity extends LivingEntity {
         List<Mob> nearby = this.level().getEntitiesOfClass(Mob.class, area,
                 mob -> mob.isAlive() && mob instanceof Enemy);
         for (Mob mob : nearby) {
-            LivingEntity currentTarget = mob.getTarget();
-            if ((currentTarget == null || !currentTarget.isAlive()) && mob.hasLineOfSight(this)) {
+            // Force retargeting onto the dummy even if the mob is already fighting something else
+            // (the player, most likely) - the bait should take priority, not just fill in when a
+            // mob happens to have no target at all.
+            if (mob.hasLineOfSight(this)) {
                 mob.setTarget(this);
                 // Older goal-based mobs (zombies, skeletons, spiders...) act on setTarget() alone.
                 // Newer brain-based mobs (piglins, breezes, wardens...) decide who to fight from
@@ -194,7 +220,7 @@ public class DummyEntity extends LivingEntity {
         if (!this.level().isClientSide && isStickHit(source)) {
             this.level().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.ARMOR_STAND_BREAK,
                     this.getSoundSource(), 1.0F, 1.0F);
-            this.dropAllEquipment();
+            this.spawnLoadedDummySpawner();
             this.discard();
             return true;
         }
@@ -202,31 +228,28 @@ public class DummyEntity extends LivingEntity {
     }
 
     /**
-     * Gives back everything it was wearing/holding (and any Curios), plus a spawner item for
-     * itself - same courtesy vanilla's ArmorStand gives when broken. Each slot is cleared right
-     * after dropping (rather than just handed a live reference into the equipment list) so there
-     * is no window where the entity is mid-removal with equipment still "equipped" - matches
-     * ArmorStand's own drop-then-clear pattern exactly.
+     * Folds this dummy's customization (name, health override, equipment, curios) into a spawner
+     * item dropped at its feet - same courtesy vanilla's ArmorStand gives when broken, but
+     * remembering everything instead of scattering the gear on the ground, so placing the item
+     * back down recreates the dummy just as it was. Negative effects are not saved.
      */
-    private void dropAllEquipment() {
-        for (int i = 0; i < this.handItems.size(); i++) {
-            ItemStack stack = this.handItems.get(i);
-            if (!stack.isEmpty()) {
-                this.spawnAtLocation(stack.copy());
-                this.handItems.set(i, ItemStack.EMPTY);
-            }
+    private void spawnLoadedDummySpawner() {
+        List<ItemStack> equipment = new ArrayList<>(EquipmentSlot.values().length);
+        for (EquipmentSlot slot : EquipmentSlot.values()) {
+            equipment.add(this.getItemBySlot(slot).copy());
         }
-        for (int i = 0; i < this.armorItems.size(); i++) {
-            ItemStack stack = this.armorItems.get(i);
-            if (!stack.isEmpty()) {
-                this.spawnAtLocation(stack.copy());
-                this.armorItems.set(i, ItemStack.EMPTY);
-            }
+        List<DummyCurioEntry> curios = CuriosCompat.isLoaded() ? CuriosCompat.captureAll(this) : List.of();
+        DummyStoredData stored = new DummyStoredData(this.maxHealthOverride, equipment, curios,
+                this.displayMetric, this.displayMetricCustomized);
+
+        ItemStack spawnerStack = new ItemStack(ModItems.DUMMY_SPAWNER.get());
+        if (this.getCustomName() != null && !this.getCustomName().equals(DEFAULT_NAME)) {
+            spawnerStack.set(DataComponents.CUSTOM_NAME, this.getCustomName());
         }
-        if (CuriosCompat.isLoaded()) {
-            CuriosCompat.dropAll(this);
+        if (!stored.isEmpty()) {
+            spawnerStack.set(ModDataComponents.DUMMY_DATA.get(), stored);
         }
-        this.spawnAtLocation(new ItemStack(ModItems.DUMMY_SPAWNER.get()));
+        this.spawnAtLocation(spawnerStack);
     }
 
     @Override
@@ -235,6 +258,26 @@ public class DummyEntity extends LivingEntity {
         if (this.getHealth() < this.getMaxHealth()) {
             this.setHealth(this.getMaxHealth());
         }
+    }
+
+    private static final java.util.Map<String, java.util.function.Supplier<SoundEvent>> NAMED_HURT_SOUNDS = java.util.Map.of(
+            "Danrique", ModSounds.DANRIQUE_HURT,
+            "MitinhoPlayer", ModSounds.MITINHOPLAYER_HURT,
+            "Nofaxu", ModSounds.NOFAXU_HURT,
+            "BrunimNeets", ModSounds.BRUNIMNEETS_HURT,
+            "mamao170", ModSounds.MAMAO170_HURT,
+            "JazaraGamer", ModSounds.JAZARAGAMER_HURT
+    );
+
+    @Override
+    protected SoundEvent getHurtSound(DamageSource source) {
+        java.util.function.Supplier<SoundEvent> named = NAMED_HURT_SOUNDS.get(this.getSkinName());
+        return named != null ? named.get() : ModSounds.DUMMY_HURT.get();
+    }
+
+    /** Removes every currently active potion effect from the dummy - see network.DummyClearEffectsPayload. */
+    public void clearEffects() {
+        this.removeAllEffects();
     }
 
     @Override
@@ -282,6 +325,8 @@ public class DummyEntity extends LivingEntity {
         ), buf -> {
             buf.writeVarInt(this.getId());
             buf.writeVarInt(this.curiosPage);
+            buf.writeEnum(this.displayMetric);
+            buf.writeBoolean(this.displayMetricCustomized);
         });
     }
 
@@ -340,6 +385,9 @@ public class DummyEntity extends LivingEntity {
         if (this.maxHealthOverride > 0.0D) {
             tag.putDouble("MaxHealthOverride", this.maxHealthOverride);
         }
+        if (this.displayMetricCustomized) {
+            tag.putString("DisplayMetric", this.displayMetric.name());
+        }
     }
 
     @Override
@@ -354,6 +402,18 @@ public class DummyEntity extends LivingEntity {
         // getDouble() already returns 0.0 (treated as "no override") when the tag is absent.
         this.maxHealthOverride = tag.getDouble("MaxHealthOverride");
         this.applyMaxHealth();
+        this.displayMetricCustomized = tag.contains("DisplayMetric");
+        this.displayMetric = this.displayMetricCustomized
+                ? parseDisplayMetric(tag.getString("DisplayMetric"))
+                : DummyDisplayMetric.TOTAL;
+    }
+
+    private static DummyDisplayMetric parseDisplayMetric(String name) {
+        try {
+            return DummyDisplayMetric.valueOf(name);
+        } catch (IllegalArgumentException e) {
+            return DummyDisplayMetric.TOTAL;
+        }
     }
 
     private static ListTag saveItemList(NonNullList<ItemStack> items, net.minecraft.core.HolderLookup.Provider registries) {
