@@ -4,28 +4,7 @@ All notable changes to this mod are documented here.
 
 ## [1.5] - 2026-09-15
 
-Ports versions 1.3, 1.4 and 1.5 (already released on the 26.1.2 branch) to Minecraft 1.21.1, plus a few small changes made while doing that port.
-
-### New
-- Breaking a dummy now saves its name, configured health, armor and curios onto its own spawner item - placing it back down recreates the dummy just as it was.
-- The spawner item can be renamed in an anvil to set the name of the dummy it creates.
-- Lure bait now takes priority over the player as a target, even if the mob is already attacking you.
-- New "Per Hit" damage display option, alongside Total and DPS.
-- The display metric (Total/DPS/Per Hit) is now configured per dummy individually, instead of being a global client setting.
-- The loaded spawner item's tooltip shows, while holding Ctrl, what's actually customized on that dummy (health, damage display, armor, curios).
-- A few specific nicknames play their own hit sound (easter egg).
-- Placing a single loaded Dummy Spawner alone in any crafting grid now "resets" it: keeps the equipment/curios it remembers, but clears its customized health, damage display, and name.
-
-### Fixed
-- The lure bait recipe, which was broken.
-- A crash/disconnect that could happen when breaking a dummy that had Curios items equipped.
-- The DPS number no longer shows absurd values on the first hit of a streak.
-- Multiple hits landing in the same tick now show as a single number instead of several lines.
-- The dummy's inventory layout, which was overlapping the "Inventory" label and the first slots.
-
-### Changed
-- The "Clear Negative Effects" button is now "Clear Effects" and removes every active effect (positive and negative), not just harmful ones.
-- Removed the global display metric config, since it's now set per dummy instead.
+Port of v1.5 (26.1.2 branch) to Minecraft 1.21.1, plus a few small fixes found along the way.
 
 ## [1.2] - 2026-08-14
 

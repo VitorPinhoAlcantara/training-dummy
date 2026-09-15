@@ -44,6 +44,17 @@ public class DummyScreen extends AbstractContainerScreen<DummyMenu> {
         this.displayMetric = menu.displayMetric;
     }
 
+    /**
+     * This NeoForge build's AbstractContainerScreen#render never calls renderTooltip on its own
+     * (its copy of vanilla's method, patched to insert a background render event, drops the
+     * trailing tooltip call) - draw it ourselves, in the same spot vanilla used to.
+     */
+    @Override
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        super.render(graphics, mouseX, mouseY, partialTick);
+        this.renderTooltip(graphics, mouseX, mouseY);
+    }
+
     @Override
     protected void init() {
         super.init();
