@@ -48,9 +48,18 @@
   "trainingdummy.display.total": "%s damage",
   "trainingdummy.display.dps": "%s DPS",
   "trainingdummy.display.perhit": "%s per hit",
+  "trainingdummy.display.perhit.breakdown": "%s = %s per hit",
+  "trainingdummy.display.perhit.typed": "%s %s per hit",
   "trainingdummy.display.total.name": "Total",
   "trainingdummy.display.dps.name": "DPS",
   "trainingdummy.display.perhit.name": "Per Hit",
+
+  "trainingdummy.damagecategory.physical": "Physical",
+  "trainingdummy.damagecategory.fire": "Fire",
+  "trainingdummy.damagecategory.freezing": "Freezing",
+  "trainingdummy.damagecategory.explosion": "Explosive",
+  "trainingdummy.damagecategory.lightning": "Lightning",
+  "trainingdummy.damagecategory.magic": "Magic",
 
   "item.trainingdummy.dummy_spawner.tooltip.holdCtrl": "Hold Ctrl for customization details",
   "item.trainingdummy.dummy_spawner.tooltip.maxHealth": "Max Health: %s",

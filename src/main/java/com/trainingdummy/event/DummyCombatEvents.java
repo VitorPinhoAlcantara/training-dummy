@@ -1,6 +1,7 @@
 package com.trainingdummy.event;
 
 import com.trainingdummy.TrainingDummyMod;
+import com.trainingdummy.entity.DamageCategory;
 import com.trainingdummy.entity.DummyEntity;
 import com.trainingdummy.network.DummyDamagePayload;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,12 +25,20 @@ public final class DummyCombatEvents {
         if (!(event.getEntity() instanceof DummyEntity dummy)) {
             return;
         }
-        if (!(event.getSource().getEntity() instanceof ServerPlayer attacker)) {
+        float amount = event.getNewDamage();
+        if (amount <= 0.0F) {
             return;
         }
-        float amount = event.getNewDamage();
-        if (amount > 0.0F) {
-            PacketDistributor.sendToPlayer(attacker, new DummyDamagePayload(dummy.getId(), amount, dummy.getDisplayMetric()));
+        if (event.getSource().getEntity() instanceof ServerPlayer attacker) {
+            dummy.rememberAttacker(attacker);
+        }
+        // Not every mod attributes its damage source back to the casting player (some magic mods'
+        // indirect/summon-based spells never do), so instead of relying on that, every hit just
+        // goes out to whoever has actually hit this dummy recently.
+        DummyDamagePayload payload = new DummyDamagePayload(dummy.getId(), amount,
+                DamageCategory.classify(event.getSource()), dummy.getDisplayMetric());
+        for (ServerPlayer recent : dummy.recentAttackers()) {
+            PacketDistributor.sendToPlayer(recent, payload);
         }
     }
 

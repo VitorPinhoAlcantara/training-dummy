@@ -48,9 +48,18 @@
   "trainingdummy.display.total": "%s de dano",
   "trainingdummy.display.dps": "%s DPS",
   "trainingdummy.display.perhit": "%s por acerto",
+  "trainingdummy.display.perhit.breakdown": "%s = %s por acerto",
+  "trainingdummy.display.perhit.typed": "%s %s por acerto",
   "trainingdummy.display.total.name": "Total",
   "trainingdummy.display.dps.name": "DPS",
   "trainingdummy.display.perhit.name": "Por Acerto",
+
+  "trainingdummy.damagecategory.physical": "Físico",
+  "trainingdummy.damagecategory.fire": "Fogo",
+  "trainingdummy.damagecategory.freezing": "Gelo",
+  "trainingdummy.damagecategory.explosion": "Explosivo",
+  "trainingdummy.damagecategory.lightning": "Elétrico",
+  "trainingdummy.damagecategory.magic": "Mágico",
 
   "item.trainingdummy.dummy_spawner.tooltip.holdCtrl": "Segure Ctrl para ver os detalhes de personalização",
   "item.trainingdummy.dummy_spawner.tooltip.maxHealth": "Vida Máxima: %s",

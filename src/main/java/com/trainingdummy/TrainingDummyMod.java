@@ -87,8 +87,8 @@ public class TrainingDummyMod {
         // so joining a server that doesn't have this mod at all still works - the mod's features
         // (damage popup, dummy itself) just won't be usable there, instead of the connection
         // being refused outright over a mod-list mismatch.
-        // Bumped from "1": DummyDamagePayload's wire format changed (added the metric field).
-        PayloadRegistrar registrar = event.registrar("2").optional();
+        // Bumped from "2": DummyDamagePayload's wire format changed (added the category field).
+        PayloadRegistrar registrar = event.registrar("3").optional();
         registrar.playToClient(DummyDamagePayload.TYPE, DummyDamagePayload.STREAM_CODEC,
                 com.trainingdummy.client.ClientPayloadHandler::handleDummyDamage);
         registrar.playToServer(DummyCuriosPagePayload.TYPE, DummyCuriosPagePayload.STREAM_CODEC,

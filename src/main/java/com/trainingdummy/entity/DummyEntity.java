@@ -13,6 +13,8 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
@@ -36,7 +38,10 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * A stationary, player-shaped combat dummy. Not a real {@code Player}/FakePlayer - a plain
@@ -76,6 +81,17 @@ public class DummyEntity extends LivingEntity {
 
     private DummyDisplayMetric displayMetric = DummyDisplayMetric.TOTAL;
     private boolean displayMetricCustomized = false;
+
+    /**
+     * Not saved, server-side only. Some magic mods' indirect/summon-based damage (spells that
+     * aren't a projectile with a proper owner, for instance) never attributes back to the casting
+     * player at all - {@code DamageSource#getEntity()} comes back null or as some other entity
+     * entirely, so there's no one to send that hit's damage popup to. As a fallback, whoever has
+     * actually hit this dummy in the last {@link #RECENT_ATTACKER_EXPIRY_TICKS} gets shown those
+     * unattributed hits too - see event.DummyCombatEvents.
+     */
+    private static final long RECENT_ATTACKER_EXPIRY_TICKS = 30 * 20L;
+    private final Map<UUID, Long> recentAttackers = new HashMap<>();
 
     public DummyEntity(EntityType<? extends DummyEntity> type, Level level) {
         super(type, level);
@@ -124,6 +140,29 @@ public class DummyEntity extends LivingEntity {
     public void setDisplayMetric(DummyDisplayMetric metric) {
         this.displayMetric = metric;
         this.displayMetricCustomized = true;
+    }
+
+    public void rememberAttacker(ServerPlayer player) {
+        this.recentAttackers.put(player.getUUID(), this.level().getGameTime());
+    }
+
+    /** Players who have hit this dummy in the last {@link #RECENT_ATTACKER_EXPIRY_TICKS}, oldest hits pruned as a side effect. */
+    public List<ServerPlayer> recentAttackers() {
+        long now = this.level().getGameTime();
+        this.recentAttackers.values().removeIf(lastHitTick -> now - lastHitTick > RECENT_ATTACKER_EXPIRY_TICKS);
+
+        MinecraftServer server = this.level().getServer();
+        if (server == null) {
+            return List.of();
+        }
+        List<ServerPlayer> players = new ArrayList<>(this.recentAttackers.size());
+        for (UUID uuid : this.recentAttackers.keySet()) {
+            ServerPlayer player = server.getPlayerList().getPlayer(uuid);
+            if (player != null) {
+                players.add(player);
+            }
+        }
+        return players;
     }
 
     /**

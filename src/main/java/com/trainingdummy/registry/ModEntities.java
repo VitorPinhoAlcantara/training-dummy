@@ -16,7 +16,6 @@ public final class ModEntities {
             ENTITY_TYPES.register("dummy", () -> EntityType.Builder.of(DummyEntity::new, MobCategory.MISC)
                     .sized(0.6F, 1.95F)
                     .clientTrackingRange(10)
-                    .fireImmune()
                     .build(TrainingDummyMod.MODID + ":dummy"));
 
     private ModEntities() {

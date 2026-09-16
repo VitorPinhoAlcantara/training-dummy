@@ -2,6 +2,7 @@ package com.trainingdummy.client;
 
 import com.trainingdummy.TrainingDummyMod;
 import com.trainingdummy.config.ClientConfig;
+import com.trainingdummy.entity.DamageCategory;
 import com.trainingdummy.entity.DummyDisplayMetric;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -12,6 +13,7 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.util.EnumMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -50,7 +52,7 @@ public final class ClientDamageTracker {
 
     private static int lastActiveDummyId = -1;
 
-    public static void recordHit(int dummyId, float amount, DummyDisplayMetric metric) {
+    public static void recordHit(int dummyId, float amount, DamageCategory category, DummyDisplayMetric metric) {
         long now = currentTick();
         double resetTicks = ClientConfig.HIT_RESET_SECONDS.get() * 20.0D;
 
@@ -59,8 +61,16 @@ public final class ClientDamageTracker {
             state.streakTotal = 0.0F;
             state.streakStartTick = now;
         }
+        // A single attack (e.g. a weapon dealing both physical and magic damage) can fire several
+        // hits in the same tick - group those into one swing instead of the last one overwriting
+        // the rest, both for the combined per-hit amount and its type breakdown.
+        if (state.lastHitTick != now) {
+            state.currentSwingBreakdown.clear();
+            state.lastHitAmount = 0.0F;
+        }
+        state.currentSwingBreakdown.merge(category, amount, Float::sum);
+        state.lastHitAmount += amount;
         state.streakTotal += amount;
-        state.lastHitAmount = amount;
         state.lastHitTick = now;
         state.metric = metric;
         state.pendingFlush = true;
@@ -81,7 +91,9 @@ public final class ClientDamageTracker {
             }
             if (state.pendingFlush) {
                 state.pendingFlush = false;
-                state.lastMessage = formatMessage(currentMetricValue(state, now), state.metric);
+                state.lastMessage = state.metric == DummyDisplayMetric.PER_HIT
+                        ? formatPerHitMessage(state)
+                        : formatMessage(currentMetricValue(state, now), state.metric);
 
                 if (ClientConfig.DISPLAY_LOCATION.get() == ClientConfig.DisplayLocation.CHAT) {
                     Minecraft mc = Minecraft.getInstance();
@@ -121,6 +133,42 @@ public final class ClientDamageTracker {
         };
     }
 
+    /**
+     * Physical is "normal" and stays unlabeled, same as before this category breakdown existed.
+     * Any other single category gets its name shown, and a swing landing more than one category
+     * (e.g. a weapon dealing both physical and magic damage) shows a breakdown of all of them.
+     */
+    private static Component formatPerHitMessage(PerDummyState state) {
+        if (state.currentSwingBreakdown.size() == 1) {
+            Map.Entry<DamageCategory, Float> only = state.currentSwingBreakdown.entrySet().iterator().next();
+            if (only.getKey() == DamageCategory.PHYSICAL) {
+                return formatMessage(state.lastHitAmount, DummyDisplayMetric.PER_HIT);
+            }
+            return Component.translatable("trainingdummy.display.perhit.typed",
+                    Component.translatable(categoryNameKey(only.getKey())).getString(),
+                    NUMBER_FORMAT.format(state.lastHitAmount));
+        }
+        StringBuilder breakdown = new StringBuilder();
+        for (DamageCategory category : DamageCategory.values()) {
+            Float amount = state.currentSwingBreakdown.get(category);
+            if (amount == null) {
+                continue;
+            }
+            if (!breakdown.isEmpty()) {
+                breakdown.append(" + ");
+            }
+            breakdown.append(Component.translatable(categoryNameKey(category)).getString())
+                    .append(' ')
+                    .append(NUMBER_FORMAT.format(amount));
+        }
+        return Component.translatable("trainingdummy.display.perhit.breakdown",
+                breakdown.toString(), NUMBER_FORMAT.format(state.lastHitAmount));
+    }
+
+    private static String categoryNameKey(DamageCategory category) {
+        return "trainingdummy.damagecategory." + category.name().toLowerCase(Locale.ROOT);
+    }
+
     private static Component formatMessage(double value, DummyDisplayMetric metric) {
         String formatted = NUMBER_FORMAT.format(value);
         String key = switch (metric) {
@@ -141,6 +189,7 @@ public final class ClientDamageTracker {
         long streakStartTick = Long.MIN_VALUE;
         long lastHitTick = Long.MIN_VALUE;
         float lastHitAmount = 0.0F;
+        final Map<DamageCategory, Float> currentSwingBreakdown = new EnumMap<>(DamageCategory.class);
         DummyDisplayMetric metric = DummyDisplayMetric.TOTAL;
         Component lastMessage;
         boolean pendingFlush;
