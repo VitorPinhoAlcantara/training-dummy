@@ -2,6 +2,15 @@
 
 All notable changes to this mod are documented here.
 
+## [1.6] - 2026-09-18
+
+### New
+- Fire damage now actually affects dummies - they used to be fire-immune, which silently blocked any attack tagged as fire damage too, not just environmental fire.
+- The Per Hit display now shows the damage type (Fire/Freezing/Explosive/Lightning/Magic) whenever a hit isn't plain physical damage, including a full breakdown when a single swing lands more than one type at once.
+- Damage that can't be attributed to a specific attacking player (some magic mods' indirect/summoned spells never do) is now shown to everyone who's actually hit that dummy in the last 30 seconds, instead of being silently dropped.
+- Dummy Spawner and Lure Bait now stack up to 64 (was 16).
+- A couple more hidden nickname easter eggs.
+
 ## [1.5] - 2026-09-15
 
 Port of v1.5 (26.1.2 branch) to Minecraft 1.21.1, plus a few small fixes found along the way.

@@ -155,6 +155,10 @@ public class DummySpawnItem extends Item {
             context.getPlayer().awardStat(Stats.ITEM_USED.get(this));
         }
         spawnerStack.shrink(1);
+
+        if (dummy.hasAutoDeathNickname()) {
+            dummy.dieOnPlacement();
+        }
         return InteractionResult.SUCCESS;
     }
 }

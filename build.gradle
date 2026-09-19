@@ -150,6 +150,12 @@ dependencies {
     // Mahou Tsukai: not compiled against, just installed for runClient to test damage attribution
     // for indirect/summon-based spell damage.
     localRuntime "maven.modrinth:mahou-tsukai:${mahoutsukai_version}"
+
+    // Oritech: not compiled against, just another dev-test mod. Requires Athena, GeckoLib and
+    // Architectury API (already added above for Relics).
+    localRuntime "maven.modrinth:athena-ctm:${athena_version}"
+    localRuntime "maven.modrinth:geckolib:${geckolib_version}"
+    localRuntime "maven.modrinth:oritech:${oritech_version}"
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.

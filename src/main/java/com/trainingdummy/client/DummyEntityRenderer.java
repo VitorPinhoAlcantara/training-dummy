@@ -1,6 +1,7 @@
 package com.trainingdummy.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.trainingdummy.TrainingDummyMod;
 import com.trainingdummy.entity.DummyEntity;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.PlayerModel;
@@ -24,6 +25,16 @@ public class DummyEntityRenderer extends LivingEntityRenderer<DummyEntity, Playe
     private static final ResourceLocation DEFAULT_SKIN =
             ResourceLocation.withDefaultNamespace("textures/entity/player/wide/steve.png");
 
+    /**
+     * Bundled instead of resolved through DummySkinCache like every other nickname - a local
+     * texture is lighter than a live skin lookup (two network round trips: Mojang profile by
+     * username, then the actual texture download), not heavier, and this nickname shouldn't wear
+     * a real player's face anyway.
+     */
+    private static final String IMMORTAL_NICK = "Immortal";
+    private static final ResourceLocation IMMORTAL_SKIN =
+            ResourceLocation.fromNamespaceAndPath(TrainingDummyMod.MODID, "textures/entity/immortal_skin.png");
+
     private final PlayerModel<DummyEntity> wideModel;
     private final PlayerModel<DummyEntity> slimModel;
 
@@ -40,14 +51,19 @@ public class DummyEntityRenderer extends LivingEntityRenderer<DummyEntity, Playe
     @Override
     public void render(DummyEntity entity, float entityYaw, float partialTicks, PoseStack poseStack,
                         MultiBufferSource buffer, int packedLight) {
-        this.model = DummySkinCache.getSkin(entity.getSkinName())
-                .map(skin -> skin.model() == PlayerSkin.Model.SLIM ? this.slimModel : this.wideModel)
-                .orElse(this.wideModel);
+        this.model = IMMORTAL_NICK.equals(entity.getSkinName())
+                ? this.wideModel
+                : DummySkinCache.getSkin(entity.getSkinName())
+                        .map(skin -> skin.model() == PlayerSkin.Model.SLIM ? this.slimModel : this.wideModel)
+                        .orElse(this.wideModel);
         super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
     }
 
     @Override
     public ResourceLocation getTextureLocation(DummyEntity entity) {
+        if (IMMORTAL_NICK.equals(entity.getSkinName())) {
+            return IMMORTAL_SKIN;
+        }
         return DummySkinCache.getSkin(entity.getSkinName())
                 .map(PlayerSkin::texture)
                 .orElse(DEFAULT_SKIN);

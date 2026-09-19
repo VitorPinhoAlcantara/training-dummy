@@ -35,7 +35,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -194,8 +196,11 @@ public class DummyEntity extends LivingEntity {
     @Override
     public void tick() {
         super.tick();
-        // Keep it topped off even outside of combat (regen, potions, etc. should never matter).
-        if (this.getHealth() < this.getMaxHealth()) {
+        // Keep it topped off even outside of combat (regen, potions, etc. should never matter) -
+        // but not while actually dying (see dieOnPlacement()): health has to stay at 0 across
+        // multiple ticks for tickDeath() to finish the death animation and remove() the entity,
+        // otherwise it gets stuck in the DYING pose forever.
+        if (!this.dead && this.getHealth() < this.getMaxHealth()) {
             this.setHealth(this.getMaxHealth());
         }
         if (!this.level().isClientSide) {
@@ -291,10 +296,76 @@ public class DummyEntity extends LivingEntity {
         this.spawnAtLocation(spawnerStack);
     }
 
+    private static final String AUTO_DEATH_NICKNAME = "Immortal";
+
+    /** Easter egg: a dummy placed under this exact name (see item.DummySpawnItem) dies for real right away. */
+    public boolean hasAutoDeathNickname() {
+        return AUTO_DEATH_NICKNAME.equals(this.getSkinName());
+    }
+
+    /**
+     * Unlike the Stick removal (a plain discard(), no death event at all), this is a real death -
+     * LivingDeathEvent, death sound/animation, stats - same as any other entity dying. It still
+     * drops its own loaded spawner item afterward (see die() below) instead of vanilla's default
+     * equipment/loot drops, which shouldDropLoot()/dropEquipment() already suppress.
+     *
+     * <p>Health has to actually reach 0 - die() itself only sets the DYING pose, the real
+     * removal happens through the normal tick's tickDeath() countdown, which only runs while
+     * isDeadOrDying() (health <= 0) is true.
+     */
+    public void dieOnPlacement() {
+        this.setHealth(0.0F);
+        this.die(this.damageSources().genericKill());
+    }
+
+    /** On top of the natural death event, how many extra ones to fire - see emitExtraDeathSouls(). */
+    private static final int IMMORTAL_EXTRA_DEATH_EVENTS = 9;
+
+    @Override
+    public void die(DamageSource damageSource) {
+        super.die(damageSource);
+        if (!this.level().isClientSide) {
+            this.spawnLoadedDummySpawner();
+            if (this.hasAutoDeathNickname()) {
+                this.emitExtraDeathSouls();
+            }
+        }
+    }
+
+    /**
+     * super.die() above already fired one GameEvent.ENTITY_DIE at this exact position as part of
+     * vanilla's own death handling - that's the hook mods like Oritech use to collect "souls" for
+     * their enchanting machines (its Arcane Catalyst listens for exactly this event). Those
+     * collectors dedupe by the *exact* death position though, so firing a few more at slightly
+     * nudged positions grants extra souls without any Oritech-specific code - just more of
+     * vanilla's own event, which any other mod listening for entity deaths benefits from too.
+     */
+    private void emitExtraDeathSouls() {
+        for (int i = 1; i <= IMMORTAL_EXTRA_DEATH_EVENTS; i++) {
+            Vec3 nudged = this.position().add(i * 0.01, 0.0D, 0.0D);
+            this.level().gameEvent(this, GameEvent.ENTITY_DIE, nudged);
+        }
+    }
+
+    /** Status id 60 is the vanilla death "poof" particle burst (tickDeath() -> makePoofParticles()) - skip it. */
+    @Override
+    public void handleEntityEvent(byte id) {
+        if (id == 60) {
+            return;
+        }
+        super.handleEntityEvent(id);
+    }
+
+    /** Drops are handled entirely by spawnLoadedDummySpawner() instead - see die() above. */
+    @Override
+    protected boolean shouldDropLoot() {
+        return false;
+    }
+
     @Override
     protected void actuallyHurt(DamageSource source, float amount) {
         super.actuallyHurt(source, amount);
-        if (this.getHealth() < this.getMaxHealth()) {
+        if (!this.dead && this.getHealth() < this.getMaxHealth()) {
             this.setHealth(this.getMaxHealth());
         }
     }
@@ -305,7 +376,9 @@ public class DummyEntity extends LivingEntity {
             "Nofaxu", ModSounds.NOFAXU_HURT,
             "BrunimNeets", ModSounds.BRUNIMNEETS_HURT,
             "mamao170", ModSounds.MAMAO170_HURT,
-            "JazaraGamer", ModSounds.JAZARAGAMER_HURT
+            "JazaraGamer", ModSounds.JAZARAGAMER_HURT,
+            "MeioElfo", ModSounds.MEIOELFO_HURT,
+            "ForeverPlayerG", ModSounds.BRUNIMNEETS_HURT
     );
 
     @Override
