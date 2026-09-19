@@ -4,7 +4,7 @@ import com.trainingdummy.config.ClientConfig;
 import com.trainingdummy.entity.DummyDisplayMetric;
 import com.trainingdummy.menu.DummyMenu;
 import com.trainingdummy.menu.SlotTooltip;
-import com.trainingdummy.network.DummyClearNegativeEffectsPayload;
+import com.trainingdummy.network.DummyClearEffectsPayload;
 import com.trainingdummy.network.DummyCuriosPagePayload;
 import com.trainingdummy.network.DummySetDisplayMetricPayload;
 import com.trainingdummy.network.DummySetMaxHealthPayload;
@@ -78,8 +78,8 @@ public class DummyScreen extends AbstractContainerScreen<DummyMenu> {
                 b -> this.submitMaxHealth()).bounds(controlsX + 104, fieldY, 60, 16).build());
 
         int effectsY = fieldY + 20;
-        this.addRenderableWidget(Button.builder(Component.translatable("trainingdummy.gui.clearNegativeEffects"),
-                b -> ClientPacketDistributor.sendToServer(new DummyClearNegativeEffectsPayload(this.menu.getDummy().getId())))
+        this.addRenderableWidget(Button.builder(Component.translatable("trainingdummy.gui.clearEffects"),
+                b -> ClientPacketDistributor.sendToServer(new DummyClearEffectsPayload(this.menu.getDummy().getId())))
                 .bounds(controlsX, effectsY, 164, 16).build());
     }
 

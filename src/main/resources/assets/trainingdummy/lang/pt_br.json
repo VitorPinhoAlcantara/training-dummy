@@ -19,7 +19,7 @@
   "trainingdummy.gui.location.screen": "Tela",
   "trainingdummy.gui.maxHealth": "Vida Máxima",
   "trainingdummy.gui.maxHealth.set": "Definir",
-  "trainingdummy.gui.clearNegativeEffects": "Remover Efeitos Negativos",
+  "trainingdummy.gui.clearEffects": "Remover Efeitos",
 
   "trainingdummy.slot.head": "Capacete",
   "trainingdummy.slot.chest": "Peitoral",
@@ -53,7 +53,16 @@
   "trainingdummy.display.total": "%s de dano",
   "trainingdummy.display.dps": "%s DPS",
   "trainingdummy.display.perhit": "%s por acerto",
+  "trainingdummy.display.perhit.breakdown": "%s = %s por acerto",
+  "trainingdummy.display.perhit.typed": "%s %s por acerto",
   "trainingdummy.display.total.name": "Total",
   "trainingdummy.display.dps.name": "DPS",
-  "trainingdummy.display.perhit.name": "Por Acerto"
+  "trainingdummy.display.perhit.name": "Por Acerto",
+
+  "trainingdummy.damagecategory.physical": "Físico",
+  "trainingdummy.damagecategory.fire": "Fogo",
+  "trainingdummy.damagecategory.freezing": "Gelo",
+  "trainingdummy.damagecategory.explosion": "Explosivo",
+  "trainingdummy.damagecategory.lightning": "Elétrico",
+  "trainingdummy.damagecategory.magic": "Mágico"
 }

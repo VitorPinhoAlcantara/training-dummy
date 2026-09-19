@@ -1,6 +1,7 @@
 package com.trainingdummy.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.trainingdummy.TrainingDummyMod;
 import com.trainingdummy.entity.DummyEntity;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelLayers;
@@ -22,6 +23,16 @@ import java.util.Optional;
 public class DummyEntityRenderer extends LivingEntityRenderer<DummyEntity, DummyRenderState, HumanoidModel<DummyRenderState>> {
 
     public static final Identifier DEFAULT_SKIN = Identifier.withDefaultNamespace("textures/entity/player/wide/steve.png");
+
+    /**
+     * Bundled instead of resolved through the skin render cache like every other nickname - a
+     * local texture is lighter than a live skin lookup (two network round trips: Mojang profile
+     * by username, then the actual texture download), not heavier, and this nickname shouldn't
+     * wear a real player's face anyway.
+     */
+    private static final String IMMORTAL_NICK = "Immortal";
+    private static final Identifier IMMORTAL_SKIN =
+            Identifier.fromNamespaceAndPath(TrainingDummyMod.MODID, "textures/entity/immortal_skin.png");
 
     private final HumanoidModel<DummyRenderState> wideModel;
     private final HumanoidModel<DummyRenderState> slimModel;
@@ -48,6 +59,11 @@ public class DummyEntityRenderer extends LivingEntityRenderer<DummyEntity, Dummy
         HumanoidMobRenderer.extractHumanoidRenderState(entity, state, partialTicks, this.itemModelResolver);
 
         String name = entity.getSkinName();
+        if (IMMORTAL_NICK.equals(name)) {
+            state.skinTexture = IMMORTAL_SKIN;
+            state.skinModel = PlayerModelType.WIDE;
+            return;
+        }
         if (!name.isBlank()) {
             Optional<PlayerSkinRenderCache.RenderInfo> info =
                     this.skinRenderCache.lookup(ResolvableProfile.createUnresolved(name)).getNow(Optional.empty());

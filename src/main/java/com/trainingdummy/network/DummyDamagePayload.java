@@ -1,6 +1,7 @@
 package com.trainingdummy.network;
 
 import com.trainingdummy.TrainingDummyMod;
+import com.trainingdummy.entity.DamageCategory;
 import com.trainingdummy.entity.DummyDisplayMetric;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -8,7 +9,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 
-public record DummyDamagePayload(int dummyEntityId, float amount, DummyDisplayMetric metric)
+public record DummyDamagePayload(int dummyEntityId, float amount, DamageCategory category, DummyDisplayMetric metric)
         implements CustomPacketPayload {
 
     public static final Type<DummyDamagePayload> TYPE =
@@ -17,6 +18,7 @@ public record DummyDamagePayload(int dummyEntityId, float amount, DummyDisplayMe
     public static final StreamCodec<ByteBuf, DummyDamagePayload> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.VAR_INT, DummyDamagePayload::dummyEntityId,
             ByteBufCodecs.FLOAT, DummyDamagePayload::amount,
+            DamageCategory.STREAM_CODEC, DummyDamagePayload::category,
             DummyDisplayMetric.STREAM_CODEC, DummyDamagePayload::metric,
             DummyDamagePayload::new
     );

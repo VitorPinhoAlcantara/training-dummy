@@ -11,10 +11,10 @@ public final class ModItems {
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(TrainingDummyMod.MODID);
 
     public static final DeferredItem<DummySpawnItem> DUMMY_SPAWNER = ITEMS.registerItem("dummy_spawner",
-            properties -> new DummySpawnItem(properties.stacksTo(16)));
+            properties -> new DummySpawnItem(properties.stacksTo(64)));
 
     public static final DeferredItem<LureBaitItem> LURE_BAIT = ITEMS.registerItem("lure_bait",
-            properties -> new LureBaitItem(properties.stacksTo(16)));
+            properties -> new LureBaitItem(properties.stacksTo(64)));
 
     private ModItems() {
     }

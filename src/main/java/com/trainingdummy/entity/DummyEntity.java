@@ -10,15 +10,15 @@ import com.trainingdummy.registry.ModItems;
 import com.trainingdummy.registry.ModSounds;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.effect.MobEffectCategory;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.HumanoidArm;
@@ -34,6 +34,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
@@ -41,9 +42,11 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForgeMod;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.UUID;
 
 public class DummyEntity extends LivingEntity {
 
@@ -57,6 +60,17 @@ public class DummyEntity extends LivingEntity {
 
     private DummyDisplayMetric displayMetric = DummyDisplayMetric.TOTAL;
     private boolean displayMetricCustomized = false;
+
+    /**
+     * Not saved, server-side only. Some magic mods' indirect/summon-based damage (spells that
+     * aren't a projectile with a proper owner, for instance) never attributes back to the casting
+     * player at all - DamageSource#getEntity() comes back null or as some other entity entirely,
+     * so there's no one to send that hit's damage popup to. As a fallback, whoever has actually
+     * hit this dummy in the last RECENT_ATTACKER_EXPIRY_TICKS gets shown those unattributed hits
+     * too - see event.DummyCombatEvents.
+     */
+    private static final long RECENT_ATTACKER_EXPIRY_TICKS = 30 * 20L;
+    private final Map<UUID, Long> recentAttackers = new HashMap<>();
 
     public DummyEntity(EntityType<? extends DummyEntity> type, Level level) {
         super(type, level);
@@ -99,6 +113,29 @@ public class DummyEntity extends LivingEntity {
         this.displayMetricCustomized = true;
     }
 
+    public void rememberAttacker(ServerPlayer player) {
+        this.recentAttackers.put(player.getUUID(), this.level().getGameTime());
+    }
+
+    /** Players who have hit this dummy in the last RECENT_ATTACKER_EXPIRY_TICKS, oldest hits pruned as a side effect. */
+    public List<ServerPlayer> recentAttackers() {
+        long now = this.level().getGameTime();
+        this.recentAttackers.values().removeIf(lastHitTick -> now - lastHitTick > RECENT_ATTACKER_EXPIRY_TICKS);
+
+        MinecraftServer server = this.level().getServer();
+        if (server == null) {
+            return List.of();
+        }
+        List<ServerPlayer> players = new ArrayList<>(this.recentAttackers.size());
+        for (UUID uuid : this.recentAttackers.keySet()) {
+            ServerPlayer player = server.getPlayerList().getPlayer(uuid);
+            if (player != null) {
+                players.add(player);
+            }
+        }
+        return players;
+    }
+
     public static AttributeSupplier.Builder createAttributes() {
         return LivingEntity.createLivingAttributes()
                 .add(Attributes.MAX_HEALTH, 1_000_000.0D)
@@ -121,7 +158,11 @@ public class DummyEntity extends LivingEntity {
     @Override
     public void tick() {
         super.tick();
-        if (this.getHealth() < this.getMaxHealth()) {
+        // Keep it topped off even outside of combat (regen, potions, etc. should never matter) -
+        // but not while actually dying (see dieOnPlacement()): health has to stay at 0 across
+        // multiple ticks for tickDeath() to finish the death animation and remove() the entity,
+        // otherwise it gets stuck in the DYING pose forever.
+        if (!this.dead && this.getHealth() < this.getMaxHealth()) {
             this.setHealth(this.getMaxHealth());
         }
         if (!this.level().isClientSide()) {
@@ -185,10 +226,76 @@ public class DummyEntity extends LivingEntity {
         this.spawnAtLocation(level, spawnerStack);
     }
 
+    private static final String AUTO_DEATH_NICKNAME = "Immortal";
+
+    /** Easter egg: a dummy placed under this exact name (see item.DummySpawnItem) dies for real right away. */
+    public boolean hasAutoDeathNickname() {
+        return AUTO_DEATH_NICKNAME.equals(this.getSkinName());
+    }
+
+    /**
+     * Unlike the Stick removal (a plain discard(), no death event at all), this is a real death -
+     * LivingDeathEvent, death sound/animation, stats - same as any other entity dying. It still
+     * drops its own loaded spawner item afterward (see die() below) instead of vanilla's default
+     * equipment/loot drops, which shouldDropLoot()/dropEquipment() already suppress.
+     *
+     * <p>Health has to actually reach 0 - die() itself only sets the DYING pose, the real
+     * removal happens through the normal tick's tickDeath() countdown, which only runs while
+     * isDeadOrDying() (health <= 0) is true.
+     */
+    public void dieOnPlacement() {
+        this.setHealth(0.0F);
+        this.die(this.damageSources().genericKill());
+    }
+
+    /** On top of the natural death event, how many extra ones to fire - see emitExtraDeathSouls(). */
+    private static final int IMMORTAL_EXTRA_DEATH_EVENTS = 9;
+
+    @Override
+    public void die(DamageSource damageSource) {
+        super.die(damageSource);
+        if (this.level() instanceof ServerLevel serverLevel) {
+            this.spawnLoadedDummySpawner(serverLevel);
+            if (this.hasAutoDeathNickname()) {
+                this.emitExtraDeathSouls();
+            }
+        }
+    }
+
+    /**
+     * super.die() above already fired one GameEvent.ENTITY_DIE at this exact position as part of
+     * vanilla's own death handling - that's the hook mods like Oritech use to collect "souls" for
+     * their enchanting machines (its Arcane Catalyst listens for exactly this event). Those
+     * collectors dedupe by the *exact* death position though, so firing a few more at slightly
+     * nudged positions grants extra souls without any Oritech-specific code - just more of
+     * vanilla's own event, which any other mod listening for entity deaths benefits from too.
+     */
+    private void emitExtraDeathSouls() {
+        for (int i = 1; i <= IMMORTAL_EXTRA_DEATH_EVENTS; i++) {
+            Vec3 nudged = this.position().add(i * 0.01, 0.0D, 0.0D);
+            this.level().gameEvent(this, GameEvent.ENTITY_DIE, nudged);
+        }
+    }
+
+    /** Drops are handled entirely by spawnLoadedDummySpawner() instead - see die() above. */
+    @Override
+    protected boolean shouldDropLoot(ServerLevel level) {
+        return false;
+    }
+
+    /** Status id 60 is the vanilla death "poof" particle burst (tickDeath() -> makePoofParticles()) - skip it. */
+    @Override
+    public void handleEntityEvent(byte id) {
+        if (id == 60) {
+            return;
+        }
+        super.handleEntityEvent(id);
+    }
+
     @Override
     protected void actuallyHurt(ServerLevel level, DamageSource source, float amount) {
         super.actuallyHurt(level, source, amount);
-        if (this.getHealth() < this.getMaxHealth()) {
+        if (!this.dead && this.getHealth() < this.getMaxHealth()) {
             this.setHealth(this.getMaxHealth());
         }
     }
@@ -199,7 +306,9 @@ public class DummyEntity extends LivingEntity {
             "Nofaxu", ModSounds.NOFAXU_HURT,
             "BrunimNeets", ModSounds.BRUNIMNEETS_HURT,
             "mamao170", ModSounds.MAMAO170_HURT,
-            "JazaraGamer", ModSounds.JAZARAGAMER_HURT
+            "JazaraGamer", ModSounds.JAZARAGAMER_HURT,
+            "MeioElfo", ModSounds.MEIOELFO_HURT,
+            "ForeverPlayerG", ModSounds.BRUNIMNEETS_HURT
     );
 
     @Override
@@ -232,13 +341,8 @@ public class DummyEntity extends LivingEntity {
         return this.getCustomName() != null ? this.getCustomName().getString() : "";
     }
 
-    public void clearNegativeEffects() {
-        List<MobEffectInstance> harmful = this.getActiveEffects().stream()
-                .filter(effect -> effect.getEffect().value().getCategory() == MobEffectCategory.HARMFUL)
-                .collect(Collectors.toList());
-        for (MobEffectInstance effect : harmful) {
-            this.removeEffect(effect.getEffect());
-        }
+    public void clearEffects() {
+        this.removeAllEffects();
     }
 
     public int getCuriosPage() {

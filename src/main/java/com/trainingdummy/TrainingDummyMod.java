@@ -4,7 +4,7 @@ import com.mojang.logging.LogUtils;
 import com.trainingdummy.config.ClientConfig;
 import com.trainingdummy.config.CommonConfig;
 import com.trainingdummy.entity.DummyEntity;
-import com.trainingdummy.network.DummyClearNegativeEffectsPayload;
+import com.trainingdummy.network.DummyClearEffectsPayload;
 import com.trainingdummy.network.DummyCuriosPagePayload;
 import com.trainingdummy.network.DummyDamagePayload;
 import com.trainingdummy.network.DummySetDisplayMetricPayload;
@@ -14,6 +14,7 @@ import com.trainingdummy.registry.ModCreativeTabs;
 import com.trainingdummy.registry.ModDataComponents;
 import com.trainingdummy.registry.ModEntities;
 import com.trainingdummy.registry.ModIngredientTypes;
+import com.trainingdummy.registry.ModRecipeSerializers;
 import com.trainingdummy.registry.ModItems;
 import com.trainingdummy.registry.ModMenus;
 import com.trainingdummy.registry.ModSounds;
@@ -42,6 +43,7 @@ public class TrainingDummyMod {
         ModItems.ITEMS.register(modEventBus);
         ModMenus.MENUS.register(modEventBus);
         ModIngredientTypes.INGREDIENT_TYPES.register(modEventBus);
+        ModRecipeSerializers.RECIPE_SERIALIZERS.register(modEventBus);
         ModCreativeTabs.CREATIVE_MODE_TABS.register(modEventBus);
         ModDataComponents.DATA_COMPONENTS.register(modEventBus);
         ModSounds.SOUND_EVENTS.register(modEventBus);
@@ -71,8 +73,8 @@ public class TrainingDummyMod {
     }
 
     private void registerPayloads(RegisterPayloadHandlersEvent event) {
-        // Bumped from "1": DummyDamagePayload's wire format changed (added the metric field) in v1.4.
-        PayloadRegistrar registrar = event.registrar("2").optional();
+        // Bumped from "2": DummyDamagePayload's wire format changed (added the category field).
+        PayloadRegistrar registrar = event.registrar("3").optional();
         registrar.playToClient(DummyDamagePayload.TYPE, DummyDamagePayload.STREAM_CODEC,
                 com.trainingdummy.client.ClientPayloadHandler::handleDummyDamage);
         registrar.playToServer(DummyCuriosPagePayload.TYPE, DummyCuriosPagePayload.STREAM_CODEC,
@@ -81,7 +83,7 @@ public class TrainingDummyMod {
                 ServerPayloadHandler::handleSetMaxHealth);
         registrar.playToServer(DummySetDisplayMetricPayload.TYPE, DummySetDisplayMetricPayload.STREAM_CODEC,
                 ServerPayloadHandler::handleSetDisplayMetric);
-        registrar.playToServer(DummyClearNegativeEffectsPayload.TYPE, DummyClearNegativeEffectsPayload.STREAM_CODEC,
-                ServerPayloadHandler::handleClearNegativeEffects);
+        registrar.playToServer(DummyClearEffectsPayload.TYPE, DummyClearEffectsPayload.STREAM_CODEC,
+                ServerPayloadHandler::handleClearEffects);
     }
 }

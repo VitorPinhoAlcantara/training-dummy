@@ -36,5 +36,12 @@
     "sounds": [
       "trainingdummy:jazaragamer_hurt"
     ]
+  },
+  "entity.dummy.meioelfo_hurt": {
+    "sounds": [
+      { "name": "trainingdummy:meioelfo_hurt_1", "weight": 75 },
+      { "name": "trainingdummy:meioelfo_hurt_2", "weight": 20 },
+      { "name": "trainingdummy:meioelfo_hurt_3", "weight": 5 }
+    ]
   }
 }
