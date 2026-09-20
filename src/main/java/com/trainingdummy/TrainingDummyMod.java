@@ -36,7 +36,7 @@ public class TrainingDummyMod {
     public static final String MODID = "trainingdummy";
     public static final Logger LOGGER = LogUtils.getLogger();
 
-    private static final double WIDENED_ATTRIBUTE_CEILING = 1.0E9;
+    private static final double WIDENED_ATTRIBUTE_CEILING = Double.MAX_VALUE;
 
     public TrainingDummyMod(IEventBus modEventBus, ModContainer modContainer) {
         ModEntities.ENTITY_TYPES.register(modEventBus);

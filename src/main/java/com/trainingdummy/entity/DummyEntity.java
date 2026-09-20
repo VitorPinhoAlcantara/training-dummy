@@ -58,11 +58,11 @@ public class DummyEntity extends LivingEntity {
 
     private double maxHealthOverride = -1.0D;
 
-    private DummyDisplayMetric displayMetric = DummyDisplayMetric.TOTAL;
+    private DummyDisplayMetric displayMetric = DummyDisplayMetric.PER_HIT;
     private boolean displayMetricCustomized = false;
 
 
-    private static final long RECENT_ATTACKER_EXPIRY_TICKS = 30 * 20L;
+    private static final long RECENT_ATTACKER_EXPIRY_TICKS = 60 * 20L;
     private final Map<UUID, Long> recentAttackers = new HashMap<>();
 
     public DummyEntity(EntityType<? extends DummyEntity> type, Level level) {
@@ -81,7 +81,7 @@ public class DummyEntity extends LivingEntity {
     }
 
     private double effectiveMaxHealthConfig() {
-        return this.maxHealthOverride > 0.0D ? this.maxHealthOverride : CommonConfig.MAX_HEALTH.get();
+        return this.maxHealthOverride > 0.0D ? this.maxHealthOverride : 20.0D;
     }
 
     public double getMaxHealthOverride() {
@@ -89,7 +89,7 @@ public class DummyEntity extends LivingEntity {
     }
 
     public void setMaxHealthOverride(double value) {
-        this.maxHealthOverride = value > 0.0D ? Math.min(value, 1_000_000_000.0D) : -1.0D;
+        this.maxHealthOverride = value > 0.0D ? Math.min(value,Double.MAX_VALUE) : -1.0D;
         this.applyMaxHealth();
     }
 
@@ -155,9 +155,9 @@ public class DummyEntity extends LivingEntity {
 
 
 
-        if (!this.dead && this.getHealth() < this.getMaxHealth()) {
-            this.setHealth(this.getMaxHealth());
-        }
+        // if (!this.dead && this.getHealth() < this.getMaxHealth()) {
+        //     this.setHealth(this.getMaxHealth());
+        // }
         if (!this.level().isClientSide()) {
             if (!this.isUsingItem() && this.getOffhandItem().is(Items.SHIELD)) {
                 this.startUsingItem(InteractionHand.OFF_HAND);
@@ -219,6 +219,7 @@ public class DummyEntity extends LivingEntity {
         this.spawnAtLocation(level, spawnerStack);
     }
 
+    // EE Immortal
     private static final String AUTO_DEATH_NICKNAME = "Immortal";
 
 
@@ -277,6 +278,7 @@ public class DummyEntity extends LivingEntity {
         }
     }
 
+    // EE Audio
     private static final java.util.Map<String, java.util.function.Supplier<SoundEvent>> NAMED_HURT_SOUNDS = java.util.Map.of(
             "Danrique", ModSounds.DANRIQUE_HURT,
             "MitinhoPlayer", ModSounds.MITINHOPLAYER_HURT,
@@ -389,14 +391,14 @@ public class DummyEntity extends LivingEntity {
         this.applyMaxHealth();
         Optional<String> savedMetric = input.getString("DisplayMetric");
         this.displayMetricCustomized = savedMetric.isPresent();
-        this.displayMetric = savedMetric.map(DummyEntity::parseDisplayMetric).orElse(DummyDisplayMetric.TOTAL);
+        this.displayMetric = savedMetric.map(DummyEntity::parseDisplayMetric).orElse(DummyDisplayMetric.PER_HIT);
     }
 
     private static DummyDisplayMetric parseDisplayMetric(String name) {
         try {
             return DummyDisplayMetric.valueOf(name);
         } catch (IllegalArgumentException e) {
-            return DummyDisplayMetric.TOTAL;
+            return DummyDisplayMetric.PER_HIT;
         }
     }
 }

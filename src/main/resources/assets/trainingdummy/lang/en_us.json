@@ -59,6 +59,8 @@
   "trainingdummy.display.dps.name": "DPS",
   "trainingdummy.display.perhit.name": "Per Hit",
 
+  "trainingdummy.combat.damageCapped": "Damage capped at the float limit",
+
   "trainingdummy.damagecategory.physical": "Physical",
   "trainingdummy.damagecategory.fire": "Fire",
   "trainingdummy.damagecategory.freezing": "Freezing",
