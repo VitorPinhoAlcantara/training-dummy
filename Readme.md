@@ -22,10 +22,4 @@ A stationary, fully-equippable combat training dummy for testing your gear and w
 
 Both are editable in-game or via the [Configured](https://www.curseforge.com/minecraft/mc-mods/configured) mod.
 
-<br>
-
-## Requirements
-
-- **NeoForge 1.21.1**
-- **Curios API** (optional, enables the accessory slots and Artifacts/Relics compatibility)
 
