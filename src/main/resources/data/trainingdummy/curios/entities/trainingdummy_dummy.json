@@ -1,0 +1,15 @@
+{
+  "entities": ["trainingdummy:dummy"],
+  "slots": [
+    "head",
+    "necklace",
+    "body",
+    "back",
+    "hands",
+    "belt",
+    "bracelet",
+    "ring",
+    "charm",
+    "curio"
+  ]
+}

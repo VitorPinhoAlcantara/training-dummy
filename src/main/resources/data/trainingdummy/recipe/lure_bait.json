@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": {
+      "item": "minecraft:bone_meal"
+    },
+    "X": {
+      "type": "trainingdummy:food"
+    }
+  },
+  "pattern": [
+    "X#X",
+    "#X#",
+    "X#X"
+  ],
+  "result": {
+    "count": 1,
+    "id": "trainingdummy:lure_bait"
+  }
+}

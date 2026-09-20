@@ -1,0 +1,40 @@
+modLoader="javafml"
+
+loaderVersion="${loader_version_range}"
+
+license="${mod_license}"
+
+[[mods]]
+
+modId="${mod_id}"
+
+version="${mod_version}"
+
+displayName="${mod_name}"
+
+description='''
+Adds a training dummy: an invulnerable player-shaped target you can gear up
+(armor, shield, Curios accessories) that reports the damage dealt to it.
+'''
+
+[[dependencies.${mod_id}]]
+    modId="neoforge"
+    type="required"
+    versionRange="[${neo_version},)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="minecraft"
+    type="required"
+    versionRange="${minecraft_version_range}"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="curios"
+    type="optional"
+    reason="Adds accessory/curio slots to the dummy's inventory, and lets mods like Artifacts/Relics that hook into Curios work on it too"
+    versionRange="[0,)"
+    ordering="AFTER"
+    side="BOTH"
