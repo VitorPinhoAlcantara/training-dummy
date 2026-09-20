@@ -17,17 +17,25 @@ import net.neoforged.neoforge.network.PacketDistributor;
 public final class DummyCombatEvents {
 
     @SubscribeEvent
+    static void onLivingDamagePre(LivingDamageEvent.Pre event) {
+        if (!(event.getEntity() instanceof DummyEntity)) {
+            return;
+        }
+        float amount = event.getNewDamage();
+        if (Float.isInfinite(amount) || Float.isNaN(amount)) {
+            event.setNewDamage(Float.MAX_VALUE);
+            if (event.getSource().getEntity() instanceof ServerPlayer attacker) {
+                attacker.sendSystemMessage(Component.translatable("trainingdummy.combat.damageCapped"));
+            }
+        }
+    }
+
+    @SubscribeEvent
     static void onLivingDamagePost(LivingDamageEvent.Post event) {
         if (!(event.getEntity() instanceof DummyEntity dummy)) {
             return;
         }
         float amount = event.getInflictedDamage();
-        if (Float.isInfinite(amount) || Float.isNaN(amount) || amount == Float.MAX_VALUE) {
-            amount = Float.MAX_VALUE;
-            if (event.getSource().getEntity() instanceof ServerPlayer attacker) {
-                attacker.sendSystemMessage(Component.translatable("trainingdummy.combat.damageCapped"));
-            }
-        }
         if (amount <= 0.0F) {
             return;
         }
