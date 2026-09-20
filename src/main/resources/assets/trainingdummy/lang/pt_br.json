@@ -55,6 +55,8 @@
   "trainingdummy.display.dps.name": "DPS",
   "trainingdummy.display.perhit.name": "Por Acerto",
 
+  "trainingdummy.combat.damageCapped": "Dano limitado ao máximo representável",
+
   "trainingdummy.damagecategory.physical": "Físico",
   "trainingdummy.damagecategory.fire": "Fogo",
   "trainingdummy.damagecategory.freezing": "Gelo",

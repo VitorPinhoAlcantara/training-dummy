@@ -173,10 +173,10 @@ public final class ClientDamageTracker {
     }
 
     private static final class PerDummyState {
-        float streakTotal = 0.0F;
+        double streakTotal = 0.0F;
         long streakStartTick = Long.MIN_VALUE;
         long lastHitTick = Long.MIN_VALUE;
-        float lastHitAmount = 0.0F;
+        double lastHitAmount = 0.0F;
         final Map<DamageCategory, Float> currentSwingBreakdown = new EnumMap<>(DamageCategory.class);
         DummyDisplayMetric metric = DummyDisplayMetric.TOTAL;
         Component lastMessage;

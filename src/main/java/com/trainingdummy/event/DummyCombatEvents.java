@@ -4,6 +4,7 @@ import com.trainingdummy.TrainingDummyMod;
 import com.trainingdummy.entity.DamageCategory;
 import com.trainingdummy.entity.DummyEntity;
 import com.trainingdummy.network.DummyDamagePayload;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -20,6 +21,12 @@ public final class DummyCombatEvents {
             return;
         }
         float amount = event.getNewDamage();
+        if (Float.isInfinite(amount) || Float.isNaN(amount) || amount == Float.MAX_VALUE) {
+            amount = Float.MAX_VALUE;
+            if (event.getSource().getEntity() instanceof ServerPlayer attacker) {
+                attacker.sendSystemMessage(Component.translatable("trainingdummy.combat.damageCapped"));
+            }
+        }
         if (amount <= 0.0F) {
             return;
         }

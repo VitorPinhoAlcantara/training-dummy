@@ -18,7 +18,7 @@ public final class ClientConfig {
 
     public static final ModConfigSpec.DoubleValue DISPLAY_DURATION_SECONDS = BUILDER
             .comment("How long the damage readout stays on screen/in chat after the last hit, in seconds.")
-            .defineInRange("displayDurationSeconds", 1.0D, 0.1D, 60.0D);
+            .defineInRange("displayDurationSeconds", 5.0D, 0.1D, 60.0D);
 
     public static final ModConfigSpec.EnumValue<DisplayLocation> DISPLAY_LOCATION = BUILDER
             .comment("Where to show the damage readout: SCREEN (HUD overlay) or CHAT (local chat message).")
