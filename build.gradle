@@ -68,6 +68,8 @@ neoForge {
             client()
 
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            systemProperty 'guideme.trainingdummy.guide.sources',
+                    file('src/main/resources/assets/trainingdummy/guides/trainingdummy/guide').absolutePath
         }
 
         server {
@@ -141,6 +143,7 @@ dependencies {
     localRuntime "maven.modrinth:shatterbyte-lib:${shatterlib_version}"
     localRuntime "maven.modrinth:architectury-api:${architectury_version}"
     localRuntime "maven.modrinth:jei:${jei_version}"
+    compileOnly "maven.modrinth:guideme:${guideme_version}"
     localRuntime "maven.modrinth:guideme:${guideme_version}"
 
 

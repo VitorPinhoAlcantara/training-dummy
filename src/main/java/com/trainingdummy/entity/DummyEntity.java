@@ -38,6 +38,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.AABB;
@@ -70,6 +71,8 @@ public class DummyEntity extends LivingEntity {
 
 
     private double maxHealthOverride = -1.0D;
+
+    private float lastDamageTaken = -1.0F;
 
     private DummyDisplayMetric displayMetric = DummyDisplayMetric.PER_HIT;
     private boolean displayMetricCustomized = false;
@@ -107,6 +110,14 @@ public class DummyEntity extends LivingEntity {
     public void setMaxHealthOverride(double value) {
         this.maxHealthOverride = value > 0.0D ? Math.min(value, Double.MAX_VALUE) : -1.0D;
         this.applyMaxHealth();
+    }
+
+    public float getLastDamageTaken() {
+        return this.lastDamageTaken;
+    }
+
+    public void setLastDamageTaken(float amount) {
+        this.lastDamageTaken = amount;
     }
 
     public DummyDisplayMetric getDisplayMetric() {
@@ -334,10 +345,16 @@ public class DummyEntity extends LivingEntity {
 
     private static final int IMMORTAL_EXTRA_DEATH_EVENTS = 9;
 
+    private boolean deathLootSpawned = false;
+
     @Override
     public void die(DamageSource damageSource) {
         super.die(damageSource);
+        if (this.deathLootSpawned) {
+            return;
+        }
         if (!this.level().isClientSide) {
+            this.deathLootSpawned = true;
             this.spawnLoadedDummySpawner();
             if (this.hasAutoDeathNickname()) {
                 this.emitExtraDeathSouls();
@@ -417,6 +434,13 @@ public class DummyEntity extends LivingEntity {
     @Override
     public InteractionResult interact(Player player, InteractionHand hand) {
         ItemStack held = player.getItemInHand(hand);
+        if (held.is(Items.JACK_O_LANTERN) && !this.level().isClientSide) {
+            this.transformIntoJack(held.copyWithCount(1));
+            if (!player.getAbilities().instabuild) {
+                held.shrink(1);
+            }
+            return InteractionResult.CONSUME;
+        }
         if (held.is(Items.STICK) && !this.level().isClientSide) {
             this.openMenuFor(player);
             return InteractionResult.CONSUME;
@@ -497,10 +521,6 @@ public class DummyEntity extends LivingEntity {
 
     @Override
     public void setItemSlot(EquipmentSlot slot, ItemStack stack) {
-        if (slot == EquipmentSlot.MAINHAND && stack.is(Items.JACK_O_LANTERN)) {
-            this.transformIntoJack(stack);
-            return;
-        }
         switch (slot.getType()) {
             case HAND -> this.handItems.set(slot.getIndex(), stack);
             case HUMANOID_ARMOR -> this.armorItems.set(slot.getIndex(), stack);
@@ -510,6 +530,9 @@ public class DummyEntity extends LivingEntity {
     }
 
 
+    private static final float JACK_DEFAULT_ATTACK_DAMAGE = 10.0F;
+
+    // EE Jack o Lantern
     private void transformIntoJack(ItemStack pumpkinStack) {
         if (!(this.level() instanceof ServerLevel serverLevel)) {
             return;
@@ -521,9 +544,6 @@ public class DummyEntity extends LivingEntity {
         jack.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
         jack.setYHeadRot(this.getYHeadRot());
 
-
-
-
         List<ItemStack> equipment = new ArrayList<>(EquipmentSlot.values().length);
         for (EquipmentSlot equipmentSlot : EquipmentSlot.values()) {
             equipment.add(this.getItemBySlot(equipmentSlot).copy());
@@ -533,13 +553,20 @@ public class DummyEntity extends LivingEntity {
                 this.displayMetric, this.displayMetricCustomized);
         jack.initializeFrom(this.getCustomName(), stored);
 
+        boolean hasSword = this.getItemBySlot(EquipmentSlot.MAINHAND).getItem() instanceof SwordItem;
+
         for (EquipmentSlot equipmentSlot : EquipmentSlot.values()) {
             jack.setItemSlot(equipmentSlot, this.getItemBySlot(equipmentSlot).copy());
         }
-        jack.setItemSlot(EquipmentSlot.HEAD, pumpkinStack.copy());
-        jack.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.NETHERITE_SWORD));
+        jack.setPumpkinHat(pumpkinStack.copy());
         if (!curios.isEmpty()) {
             CuriosCompat.restoreAll(jack, curios);
+        }
+
+        jack.applyMaxHealthFrom(this.effectiveMaxHealthConfig());
+        if (!hasSword) {
+            float fallbackAttack = this.lastDamageTaken >= 0.0F ? this.lastDamageTaken : JACK_DEFAULT_ATTACK_DAMAGE;
+            jack.setBaseAttackDamage(fallbackAttack);
         }
 
         serverLevel.addFreshEntity(jack);
@@ -562,6 +589,9 @@ public class DummyEntity extends LivingEntity {
         if (this.displayMetricCustomized) {
             tag.putString("DisplayMetric", this.displayMetric.name());
         }
+        if (this.lastDamageTaken >= 0.0F) {
+            tag.putFloat("LastDamageTaken", this.lastDamageTaken);
+        }
     }
 
     @Override
@@ -580,6 +610,7 @@ public class DummyEntity extends LivingEntity {
         this.displayMetric = this.displayMetricCustomized
                 ? parseDisplayMetric(tag.getString("DisplayMetric"))
                 : DummyDisplayMetric.PER_HIT;
+        this.lastDamageTaken = tag.contains("LastDamageTaken") ? tag.getFloat("LastDamageTaken") : -1.0F;
     }
 
     private static DummyDisplayMetric parseDisplayMetric(String name) {

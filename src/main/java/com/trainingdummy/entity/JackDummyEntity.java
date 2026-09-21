@@ -4,7 +4,11 @@ import com.trainingdummy.item.DummyStoredData;
 import com.trainingdummy.registry.ModDataComponents;
 import com.trainingdummy.registry.ModItems;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -13,6 +17,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
@@ -34,14 +39,34 @@ public class JackDummyEntity extends PathfinderMob {
 
     private static final Component DISPLAY_NAME = Component.literal("Jack");
 
+    // Cosmetic-only pumpkin head; kept separate from EquipmentSlot.HEAD so a real
+    // helmet the player already equipped keeps contributing its armor stats.
+    private static final EntityDataAccessor<ItemStack> DATA_PUMPKIN_HAT =
+            SynchedEntityData.defineId(JackDummyEntity.class, EntityDataSerializers.ITEM_STACK);
+
     private final ServerBossEvent bossEvent =
-            new ServerBossEvent(DISPLAY_NAME, BossEvent.BossBarColor.RED, BossEvent.BossBarOverlay.PROGRESS);
+            new ServerBossEvent(DISPLAY_NAME, BossEvent.BossBarColor.YELLOW, BossEvent.BossBarOverlay.PROGRESS);
 
     private Component originalName;
     private DummyStoredData originalData = NO_DATA;
+    private boolean deathLootSpawned = false;
 
     public JackDummyEntity(EntityType<? extends JackDummyEntity> type, Level level) {
         super(type, level);
+    }
+
+    @Override
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_PUMPKIN_HAT, ItemStack.EMPTY);
+    }
+
+    public ItemStack getPumpkinHat() {
+        return this.entityData.get(DATA_PUMPKIN_HAT);
+    }
+
+    public void setPumpkinHat(ItemStack stack) {
+        this.entityData.set(DATA_PUMPKIN_HAT, stack);
     }
 
     @Override
@@ -64,10 +89,10 @@ public class JackDummyEntity extends PathfinderMob {
 
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 1000.0D)
-                .add(Attributes.ARMOR, 100.0D)
-                .add(Attributes.MOVEMENT_SPEED, 0.23D)
-                .add(Attributes.ATTACK_DAMAGE, 3.0D)
+                .add(Attributes.MAX_HEALTH, 100.0D)
+                .add(Attributes.ARMOR, 20.0D)
+                .add(Attributes.MOVEMENT_SPEED, 0.4D)
+                .add(Attributes.ATTACK_DAMAGE, 5.0D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D);
     }
 
@@ -90,6 +115,22 @@ public class JackDummyEntity extends PathfinderMob {
     }
 
 
+    public void applyMaxHealthFrom(double maxHealth) {
+        AttributeInstance maxHealthAttribute = this.getAttribute(Attributes.MAX_HEALTH);
+        if (maxHealthAttribute != null) {
+            maxHealthAttribute.setBaseValue(maxHealth);
+        }
+        this.setHealth(this.getMaxHealth());
+    }
+
+    public void setBaseAttackDamage(float attackDamage) {
+        AttributeInstance attackDamageAttribute = this.getAttribute(Attributes.ATTACK_DAMAGE);
+        if (attackDamageAttribute != null) {
+            attackDamageAttribute.setBaseValue(attackDamage);
+        }
+    }
+
+
     @Override
     protected boolean shouldDropLoot() {
         return false;
@@ -98,9 +139,31 @@ public class JackDummyEntity extends PathfinderMob {
     @Override
     public void die(DamageSource damageSource) {
         super.die(damageSource);
+        if (this.deathLootSpawned) {
+            return;
+        }
         if (this.level() instanceof ServerLevel) {
+            this.deathLootSpawned = true;
             this.spawnLoadedDummySpawner();
-            this.spawnAtLocation(new ItemStack(Items.JACK_O_LANTERN));
+            ItemStack pumpkinHat = this.getPumpkinHat();
+            this.spawnAtLocation(!pumpkinHat.isEmpty() ? pumpkinHat.copy() : new ItemStack(Items.JACK_O_LANTERN));
+        }
+    }
+
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        ItemStack pumpkinHat = this.getPumpkinHat();
+        if (!pumpkinHat.isEmpty()) {
+            tag.put("PumpkinHat", pumpkinHat.save(this.registryAccess(), new CompoundTag()));
+        }
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        if (tag.contains("PumpkinHat")) {
+            this.setPumpkinHat(ItemStack.parseOptional(this.registryAccess(), tag.getCompound("PumpkinHat")));
         }
     }
 
