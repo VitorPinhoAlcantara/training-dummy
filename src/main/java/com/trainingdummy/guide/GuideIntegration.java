@@ -13,7 +13,6 @@ public final class GuideIntegration {
         return ModList.get().isLoaded(GUIDEME_MODID);
     }
 
-    // Registers assets/trainingdummy/guides/trainingdummy/guide/*.md as the "trainingdummy:guide" guide.
     public static void register() {
         Guide.builder(ResourceLocation.fromNamespaceAndPath(TrainingDummyMod.MODID, "guide")).build();
     }

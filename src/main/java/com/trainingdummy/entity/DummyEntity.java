@@ -181,12 +181,6 @@ public class DummyEntity extends LivingEntity {
         super.tick();
         this.tickHerobrineLevitate();
 
-
-
-
-        // if (!this.dead && this.getHealth() < this.getMaxHealth()) {
-        //     this.setHealth(this.getMaxHealth());
-        // }
         if (!this.level().isClientSide) {
 
 
@@ -412,7 +406,7 @@ public class DummyEntity extends LivingEntity {
 
     @Override
     protected SoundEvent getHurtSound(DamageSource source) {
-        java.util.function.Supplier<SoundEvent> named = NAMED_HURT_SOUNDS.get(this.getSkinName());
+        java.util.function.Supplier<SoundEvent> named = findNamedSound(NAMED_HURT_SOUNDS, this.getSkinName());
         return named != null ? named.get() : ModSounds.DUMMY_HURT.get();
     }
 
@@ -422,8 +416,18 @@ public class DummyEntity extends LivingEntity {
 
 
     public Optional<SoundEvent> getPlacementSound() {
-        java.util.function.Supplier<SoundEvent> named = NAMED_PLACE_SOUNDS.get(this.getSkinName());
+        java.util.function.Supplier<SoundEvent> named = findNamedSound(NAMED_PLACE_SOUNDS, this.getSkinName());
         return Optional.ofNullable(named).map(java.util.function.Supplier::get);
+    }
+
+    private static java.util.function.Supplier<SoundEvent> findNamedSound(
+            java.util.Map<String, java.util.function.Supplier<SoundEvent>> sounds, String name) {
+        for (java.util.Map.Entry<String, java.util.function.Supplier<SoundEvent>> entry : sounds.entrySet()) {
+            if (entry.getKey().equalsIgnoreCase(name)) {
+                return entry.getValue();
+            }
+        }
+        return null;
     }
 
 
@@ -532,7 +536,6 @@ public class DummyEntity extends LivingEntity {
 
     private static final float JACK_DEFAULT_ATTACK_DAMAGE = 10.0F;
 
-    // EE Jack o Lantern
     private void transformIntoJack(ItemStack pumpkinStack) {
         if (!(this.level() instanceof ServerLevel serverLevel)) {
             return;
