@@ -19,6 +19,7 @@ public final class ModCreativeTabs {
                     .displayItems((parameters, output) -> {
                         output.accept(ModItems.DUMMY_SPAWNER.get());
                         output.accept(ModItems.LURE_BAIT.get());
+                        output.accept(ModItems.SCOREBOARD_DUMMY_SPAWNER.get());
                     })
                     .build());
 

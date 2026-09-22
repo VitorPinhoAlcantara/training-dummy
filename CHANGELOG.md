@@ -2,6 +2,14 @@
 
 All notable changes to this mod are documented here.
 
+## [1.7] - 2026-09-22
+
+### New
+- Added a Scoreboard Dummy: craft one from a Dummy Spawner + Diamond, and it tracks the single biggest hit landed on it instead of a running total - with both a local (this server) leaderboard and an optional global (cross-server) leaderboard.
+- The #1 player on whichever leaderboard is showing gets their real skin rendered next to their name - click and drag it to spin it around.
+- Global leaderboard can be turned off entirely from config (globalLeaderboardEnabled, on by default); the local leaderboard keeps working either way.
+- A weapon blacklist keeps specific items from ever scoring a leaderboard hit - by exact item ID, by whole mod ("modid:*"), or by a name fragment matched against any item's ID. Every Avaritia and Modern Industrialization item, the Morgan Sword, and anything with "infinity" or "quantum" in its ID are banned by default and can't be overridden; servers can ban more on top from config.
+
 ## [1.6] - 2026-09-19
 
 ### New

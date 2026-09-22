@@ -39,3 +39,6 @@ run/
 repo/
 !**/src/**/repo/
 
+### Secrets ###
+secrets.properties
+

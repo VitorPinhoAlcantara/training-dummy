@@ -2,6 +2,7 @@ package com.trainingdummy.registry;
 
 import com.trainingdummy.TrainingDummyMod;
 import com.trainingdummy.entity.DummyEntity;
+import com.trainingdummy.entity.ScoreboardDummyEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
@@ -21,6 +22,14 @@ public final class ModEntities {
                     .clientTrackingRange(10)
                     .build(ResourceKey.create(Registries.ENTITY_TYPE,
                             Identifier.fromNamespaceAndPath(TrainingDummyMod.MODID, "dummy"))));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<ScoreboardDummyEntity>> SCOREBOARD_DUMMY =
+            ENTITY_TYPES.register("scoreboard_dummy", () -> EntityType.Builder.of(ScoreboardDummyEntity::new, MobCategory.MISC)
+                    .sized(0.6F, 1.95F)
+                    .clientTrackingRange(10)
+                    .fireImmune()
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE,
+                            Identifier.fromNamespaceAndPath(TrainingDummyMod.MODID, "scoreboard_dummy"))));
 
     private ModEntities() {
     }

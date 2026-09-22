@@ -7,6 +7,7 @@ import com.trainingdummy.menu.SlotTooltip;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.fml.ModList;
@@ -62,7 +63,7 @@ public final class CuriosCompat {
         return CuriosApi.getCuriosInventory(dummy).map(ICuriosItemHandler::getSlots).orElse(0);
     }
 
-    public static List<DummyCurioEntry> captureAll(DummyEntity dummy) {
+    public static List<DummyCurioEntry> captureAll(LivingEntity dummy) {
         List<DummyCurioEntry> result = new ArrayList<>();
         CuriosApi.getCuriosInventory(dummy).ifPresent(handler -> {
             for (ICurioStacksHandler stacksHandler : handler.getCurios().values()) {

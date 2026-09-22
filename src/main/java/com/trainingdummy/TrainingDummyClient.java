@@ -27,6 +27,7 @@ public class TrainingDummyClient {
     @SubscribeEvent
     static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(ModEntities.DUMMY.get(), DummyEntityRenderer::new);
+        event.registerEntityRenderer(ModEntities.SCOREBOARD_DUMMY.get(), DummyEntityRenderer::new);
     }
 
     @SubscribeEvent
