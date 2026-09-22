@@ -68,5 +68,40 @@
   "item.trainingdummy.dummy_spawner.tooltip.maxHealth": "Max Health: %s",
   "item.trainingdummy.dummy_spawner.tooltip.displayMetric": "Damage Display: %s",
   "item.trainingdummy.dummy_spawner.tooltip.equipment": "Equipment: %s",
-  "item.trainingdummy.dummy_spawner.tooltip.curios": "Curios: %s"
+  "item.trainingdummy.dummy_spawner.tooltip.curios": "Curios: %s",
+
+  "item.trainingdummy.scoreboard_dummy_spawner": "Scoreboard Dummy",
+  "item.trainingdummy.scoreboard_dummy.tooltip.configure": "Right-click with a Stick to view the leaderboard",
+  "item.trainingdummy.scoreboard_dummy.tooltip.remove": "Hit with a Stick to remove it",
+  "entity.trainingdummy.scoreboard_dummy": "Scoreboard Dummy",
+
+  "gui.trainingdummy.title": "Biggest Hit Leaderboard",
+  "gui.trainingdummy.title.global": "Global Leaderboard",
+  "gui.trainingdummy.title.global.named": "Global Leaderboard - %s",
+  "gui.trainingdummy.title.local": "Local Leaderboard (this server)",
+  "gui.trainingdummy.mode.global": "Mode: Global",
+  "gui.trainingdummy.mode.local": "Mode: Local",
+  "gui.trainingdummy.empty": "No records yet - be the first!",
+  "gui.trainingdummy.entry": "%s. %s - %s damage",
+
+  "trainingdummy.record.local": "New local record! You're now #%s on this server's leaderboard.",
+  "trainingdummy.record.achieved": "New record! You're now #%s on the leaderboard (pending confirmation).",
+  "trainingdummy.record.confirmed": "Record confirmed! Sending to the server... You're #%s on the leaderboard.",
+  "trainingdummy.record.rejected": "The leaderboard updated in the meantime and your record didn't make the cut :(",
+  "trainingdummy.record.communication_error": "Couldn't confirm your record - there was a problem communicating with the leaderboard server. Please try again later.",
+
+  "trainingdummy.configuration.modpackId": "Modpack ID",
+  "trainingdummy.configuration.modpackId.tooltip": "Identifies this server's modpack to the leaderboard worker. Every server sharing a leaderboard must use the same value. Leave blank to use the mod's built-in default shared leaderboard.",
+  "trainingdummy.configuration.modpackDisplayName": "Modpack display name",
+  "trainingdummy.configuration.modpackDisplayName.tooltip": "Friendly name shown in the global leaderboard's title (e.g. \"ATM 11\"). Purely cosmetic - leave blank to just show a generic title.",
+  "trainingdummy.configuration.leaderboardRefreshSeconds": "Leaderboard refresh interval (seconds)",
+  "trainingdummy.configuration.leaderboardRefreshSeconds.tooltip": "Minimum time between this server re-checking the worker for leaderboard updates.",
+  "trainingdummy.configuration.recordDebounceSeconds": "Record debounce (seconds)",
+  "trainingdummy.configuration.recordDebounceSeconds.tooltip": "How long to wait after a qualifying hit before submitting it, in case the same player beats it again shortly after.",
+  "trainingdummy.configuration.workerBaseUrl": "Worker base URL",
+  "trainingdummy.configuration.workerBaseUrl.tooltip": "Base URL of the leaderboard worker (e.g. http://127.0.0.1:8787 for a local wrangler dev you're running yourself). Leave blank to use the mod's built-in worker.",
+  "trainingdummy.configuration.workerApiKey": "Worker API key",
+  "trainingdummy.configuration.workerApiKey.tooltip": "Sent as the X-Api-Key header on every submission, if set. Must match modpackId's own key on the worker. Leave blank to use the mod's built-in default modpack's key.",
+  "trainingdummy.configuration.weaponBlacklist": "Weapon blacklist (extra)",
+  "trainingdummy.configuration.weaponBlacklist.tooltip": "Extra item IDs banned from scoring, ADDED ON TOP of the mod's built-in blacklist (can't remove or override it). Exact IDs (\"minecraft:netherite_sword\"), a whole mod with \"modid:*\" (\"avaritia:*\"), or - with no \":\" - a substring match against every item ID (\"sword\")."
 }

@@ -3,6 +3,7 @@ package com.trainingdummy.registry;
 import com.trainingdummy.TrainingDummyMod;
 import com.trainingdummy.entity.DummyEntity;
 import com.trainingdummy.entity.JackDummyEntity;
+import com.trainingdummy.entity.ScoreboardDummyEntity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -25,6 +26,13 @@ public final class ModEntities {
                     .sized(0.6F, 1.95F)
                     .clientTrackingRange(10)
                     .build(TrainingDummyMod.MODID + ":jack"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<ScoreboardDummyEntity>> SCOREBOARD_DUMMY =
+            ENTITY_TYPES.register("scoreboard_dummy", () -> EntityType.Builder.of(ScoreboardDummyEntity::new, MobCategory.MISC)
+                    .sized(0.6F, 1.95F)
+                    .clientTrackingRange(10)
+                    .fireImmune()
+                    .build(TrainingDummyMod.MODID + ":scoreboard_dummy"));
 
     private ModEntities() {
     }

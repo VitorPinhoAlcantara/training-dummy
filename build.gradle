@@ -184,7 +184,32 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
 
 sourceSets.main.resources.srcDir generateModMetadata
 
+// Worker secrets (leaderboard modpack ID / API key / base URL): kept out of committed source.
+// Filled in from secrets.properties, a gitignored file at the project root - see
+// secrets.properties.example. Never printed, never checked in; missing keys just fall back to "".
+var secretsFile = file("secrets.properties")
+var secretsProps = new Properties()
+if (secretsFile.exists()) {
+    secretsFile.withInputStream { secretsProps.load(it) }
+}
+
+var generateWorkerSecrets = tasks.register("generateWorkerSecrets", Copy) {
+    var replaceProperties = [
+            worker_default_modpack_id     : secretsProps.getProperty('worker_default_modpack_id', ''),
+            worker_default_modpack_api_key: secretsProps.getProperty('worker_default_modpack_api_key', ''),
+            worker_default_base_url       : secretsProps.getProperty('worker_default_base_url',
+                    'https://dummyscoreboard-worker.vitoralcantara1722.workers.dev'),
+    ]
+    inputs.properties replaceProperties
+    expand replaceProperties
+    from "src/main/templates-secrets"
+    into "build/generated/sources/workerSecrets"
+}
+
+sourceSets.main.java.srcDir generateWorkerSecrets
+
 neoForge.ideSyncTask generateModMetadata
+neoForge.ideSyncTask generateWorkerSecrets
 
 
 publishing {

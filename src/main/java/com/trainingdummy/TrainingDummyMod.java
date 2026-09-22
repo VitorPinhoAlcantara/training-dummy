@@ -84,6 +84,7 @@ public class TrainingDummyMod {
     private void registerAttributes(EntityAttributeCreationEvent event) {
         event.put(ModEntities.DUMMY.get(), DummyEntity.createAttributes().build());
         event.put(ModEntities.JACK.get(), JackDummyEntity.createAttributes().build());
+        event.put(ModEntities.SCOREBOARD_DUMMY.get(), DummyEntity.createAttributes().build());
     }
 
     private void registerPayloads(RegisterPayloadHandlersEvent event) {
@@ -103,5 +104,8 @@ public class TrainingDummyMod {
                 ServerPayloadHandler::handleSetDisplayMetric);
         registrar.playToServer(DummyClearEffectsPayload.TYPE, DummyClearEffectsPayload.STREAM_CODEC,
                 ServerPayloadHandler::handleClearEffects);
+        registrar.playToClient(com.trainingdummy.network.OpenScoreboardScreenPayload.TYPE,
+                com.trainingdummy.network.OpenScoreboardScreenPayload.STREAM_CODEC,
+                com.trainingdummy.client.ClientPayloadHandler::handleOpenScoreboardScreen);
     }
 }
