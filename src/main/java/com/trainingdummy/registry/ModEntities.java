@@ -2,6 +2,7 @@ package com.trainingdummy.registry;
 
 import com.trainingdummy.TrainingDummyMod;
 import com.trainingdummy.entity.DummyEntity;
+import com.trainingdummy.entity.JackDummyEntity;
 import com.trainingdummy.entity.ScoreboardDummyEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
@@ -30,6 +31,13 @@ public final class ModEntities {
                     .fireImmune()
                     .build(ResourceKey.create(Registries.ENTITY_TYPE,
                             Identifier.fromNamespaceAndPath(TrainingDummyMod.MODID, "scoreboard_dummy"))));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<JackDummyEntity>> JACK =
+            ENTITY_TYPES.register("jack", () -> EntityType.Builder.of(JackDummyEntity::new, MobCategory.MISC)
+                    .sized(0.6F, 1.95F)
+                    .clientTrackingRange(10)
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE,
+                            Identifier.fromNamespaceAndPath(TrainingDummyMod.MODID, "jack"))));
 
     private ModEntities() {
     }

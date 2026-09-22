@@ -153,7 +153,7 @@ public class ScoreboardScreen extends Screen {
 
             if (renderState instanceof LivingEntityRenderState livingState) {
                 livingState.bodyRot = this.previewYaw;
-                livingState.yRot = this.previewYaw;
+                livingState.yRot = 0.0F;
                 livingState.xRot = 0.0F;
                 livingState.boundingBoxWidth = livingState.boundingBoxWidth / livingState.scale;
                 livingState.boundingBoxHeight = livingState.boundingBoxHeight / livingState.scale;

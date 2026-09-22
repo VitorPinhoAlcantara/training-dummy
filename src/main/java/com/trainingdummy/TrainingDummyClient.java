@@ -3,6 +3,7 @@ package com.trainingdummy;
 import com.trainingdummy.client.DummyEntityRenderer;
 import com.trainingdummy.client.DummyHudOverlay;
 import com.trainingdummy.client.DummyScreen;
+import com.trainingdummy.client.JackDummyEntityRenderer;
 import com.trainingdummy.registry.ModEntities;
 import com.trainingdummy.registry.ModMenus;
 import net.neoforged.api.distmarker.Dist;
@@ -28,6 +29,7 @@ public class TrainingDummyClient {
     static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(ModEntities.DUMMY.get(), DummyEntityRenderer::new);
         event.registerEntityRenderer(ModEntities.SCOREBOARD_DUMMY.get(), DummyEntityRenderer::new);
+        event.registerEntityRenderer(ModEntities.JACK.get(), JackDummyEntityRenderer::new);
     }
 
     @SubscribeEvent

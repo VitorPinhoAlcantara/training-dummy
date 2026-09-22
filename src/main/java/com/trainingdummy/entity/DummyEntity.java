@@ -6,19 +6,25 @@ import com.trainingdummy.item.DummyCurioEntry;
 import com.trainingdummy.item.DummyStoredData;
 import com.trainingdummy.menu.DummyMenu;
 import com.trainingdummy.registry.ModDataComponents;
+import com.trainingdummy.registry.ModEntities;
 import com.trainingdummy.registry.ModItems;
 import com.trainingdummy.registry.ModSounds;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.HumanoidArm;
@@ -58,9 +64,14 @@ public class DummyEntity extends LivingEntity {
 
     private double maxHealthOverride = -1.0D;
 
+    private float lastDamageTaken = -1.0F;
+
     private DummyDisplayMetric displayMetric = DummyDisplayMetric.PER_HIT;
     private boolean displayMetricCustomized = false;
 
+    private Vec3 herobrineLevitateAnchor;
+    private long herobrineLevitateStartTick = -1L;
+    private long herobrineLevitateUntilTick = -1L;
 
     private static final long RECENT_ATTACKER_EXPIRY_TICKS = 60 * 20L;
     private final Map<UUID, Long> recentAttackers = new HashMap<>();
@@ -91,6 +102,14 @@ public class DummyEntity extends LivingEntity {
     public void setMaxHealthOverride(double value) {
         this.maxHealthOverride = value > 0.0D ? Math.min(value,Double.MAX_VALUE) : -1.0D;
         this.applyMaxHealth();
+    }
+
+    public float getLastDamageTaken() {
+        return this.lastDamageTaken;
+    }
+
+    public void setLastDamageTaken(float amount) {
+        this.lastDamageTaken = amount;
     }
 
     public DummyDisplayMetric getDisplayMetric() {
@@ -151,13 +170,8 @@ public class DummyEntity extends LivingEntity {
     @Override
     public void tick() {
         super.tick();
+        this.tickHerobrineLevitate();
 
-
-
-
-        // if (!this.dead && this.getHealth() < this.getMaxHealth()) {
-        //     this.setHealth(this.getMaxHealth());
-        // }
         if (!this.level().isClientSide()) {
             if (!this.isUsingItem() && this.getOffhandItem().is(Items.SHIELD)) {
                 this.startUsingItem(InteractionHand.OFF_HAND);
@@ -188,6 +202,23 @@ public class DummyEntity extends LivingEntity {
         return source.getDirectEntity() instanceof Player player && player.getMainHandItem().is(Items.STICK);
     }
 
+    private static final String MITINHO_NICKNAME = "MitinhoPlayer";
+
+    public boolean hasMitinhoNickname() {
+        return MITINHO_NICKNAME.equals(this.getSkinName());
+    }
+
+    private boolean isMorganKill(DamageSource source) {
+        if (!this.hasMitinhoNickname()) {
+            return false;
+        }
+        if (!(source.getDirectEntity() instanceof Player player)) {
+            return false;
+        }
+        Identifier weaponId = BuiltInRegistries.ITEM.getKey(player.getMainHandItem().getItem());
+        return weaponId != null && weaponId.getNamespace().equals("mahoutsukai") && weaponId.getPath().equals("morgan");
+    }
+
     @Override
     public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
         if (isStickHit(source)) {
@@ -195,6 +226,13 @@ public class DummyEntity extends LivingEntity {
                     this.getSoundSource(), 1.0F, 1.0F);
             this.spawnLoadedDummySpawner(level);
             this.discard();
+            return true;
+        }
+        if (this.isMorganKill(source)) {
+            level.playSound(null, this.getX(), this.getY(), this.getZ(), this.getHurtSound(source),
+                    this.getSoundSource(), 1.0F, 1.0F);
+            this.setHealth(0.0F);
+            this.die(source);
             return true;
         }
         return super.hurtServer(level, source, amount);
@@ -219,7 +257,36 @@ public class DummyEntity extends LivingEntity {
         this.spawnAtLocation(level, spawnerStack);
     }
 
-    // EE Immortal
+    private static final String HEROBRINE_NICKNAME = "Herobrine";
+
+    public boolean hasHerobrineNickname() {
+        return HEROBRINE_NICKNAME.equals(this.getSkinName());
+    }
+
+    private static final double HEROBRINE_LEVITATE_HEIGHT = 3.0D;
+
+    public void startHerobrineLevitate(int ticks) {
+        this.herobrineLevitateAnchor = this.position();
+        this.herobrineLevitateStartTick = this.level().getGameTime();
+        this.herobrineLevitateUntilTick = this.herobrineLevitateStartTick + ticks;
+    }
+
+    private void tickHerobrineLevitate() {
+        if (this.herobrineLevitateAnchor == null) {
+            return;
+        }
+        long now = this.level().getGameTime();
+        if (now >= this.herobrineLevitateUntilTick) {
+            this.herobrineLevitateAnchor = null;
+            return;
+        }
+        double progress = (double) (now - this.herobrineLevitateStartTick)
+                / (this.herobrineLevitateUntilTick - this.herobrineLevitateStartTick);
+        this.setPos(this.herobrineLevitateAnchor.x,
+                this.herobrineLevitateAnchor.y + HEROBRINE_LEVITATE_HEIGHT * progress,
+                this.herobrineLevitateAnchor.z);
+    }
+
     private static final String AUTO_DEATH_NICKNAME = "Immortal";
 
 
@@ -243,6 +310,12 @@ public class DummyEntity extends LivingEntity {
             this.spawnLoadedDummySpawner(serverLevel);
             if (this.hasAutoDeathNickname()) {
                 this.emitExtraDeathSouls();
+            }
+            if (this.hasMitinhoNickname() && serverLevel.getServer() != null) {
+                serverLevel.getServer().getPlayerList().broadcastSystemMessage(
+                        Component.literal("Mitinho died and went into spectator mode.")
+                                .withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC),
+                        false);
             }
         }
     }
@@ -278,7 +351,6 @@ public class DummyEntity extends LivingEntity {
         }
     }
 
-    // EE Audio
     private static final java.util.Map<String, java.util.function.Supplier<SoundEvent>> NAMED_HURT_SOUNDS = java.util.Map.of(
             "Danrique", ModSounds.DANRIQUE_HURT,
             "MitinhoPlayer", ModSounds.MITINHOPLAYER_HURT,
@@ -292,13 +364,78 @@ public class DummyEntity extends LivingEntity {
 
     @Override
     protected SoundEvent getHurtSound(DamageSource source) {
-        java.util.function.Supplier<SoundEvent> named = NAMED_HURT_SOUNDS.get(this.getSkinName());
+        java.util.function.Supplier<SoundEvent> named = findNamedSound(NAMED_HURT_SOUNDS, this.getSkinName());
         return named != null ? named.get() : ModSounds.DUMMY_HURT.get();
+    }
+
+    private static final java.util.Map<String, java.util.function.Supplier<SoundEvent>> NAMED_PLACE_SOUNDS = java.util.Map.of(
+            "JazaraGamer", ModSounds.JAZARAGAMER_PLACE
+    );
+
+    public Optional<SoundEvent> getPlacementSound() {
+        java.util.function.Supplier<SoundEvent> named = findNamedSound(NAMED_PLACE_SOUNDS, this.getSkinName());
+        return Optional.ofNullable(named).map(java.util.function.Supplier::get);
+    }
+
+    private static java.util.function.Supplier<SoundEvent> findNamedSound(
+            java.util.Map<String, java.util.function.Supplier<SoundEvent>> sounds, String name) {
+        for (java.util.Map.Entry<String, java.util.function.Supplier<SoundEvent>> entry : sounds.entrySet()) {
+            if (entry.getKey().equalsIgnoreCase(name)) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+
+    private static final float JACK_DEFAULT_ATTACK_DAMAGE = 10.0F;
+
+    private void transformIntoJack(ServerLevel serverLevel, ItemStack pumpkinStack) {
+        JackDummyEntity jack = ModEntities.JACK.get().create(serverLevel, EntitySpawnReason.MOB_SUMMONED);
+        if (jack == null) {
+            return;
+        }
+        jack.snapTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
+        jack.setYHeadRot(this.getYHeadRot());
+
+        List<ItemStack> equipment = new ArrayList<>(EquipmentSlot.VALUES.size());
+        for (EquipmentSlot slot : EquipmentSlot.VALUES) {
+            equipment.add(this.getItemBySlot(slot).copy());
+        }
+        List<DummyCurioEntry> curios = CuriosCompat.isLoaded() ? CuriosCompat.captureAll(this) : List.of();
+        DummyStoredData stored = new DummyStoredData(this.maxHealthOverride, equipment, curios,
+                this.displayMetric, this.displayMetricCustomized);
+        jack.initializeFrom(this.getCustomName(), stored);
+
+        boolean hasSword = this.getItemBySlot(EquipmentSlot.MAINHAND).is(ItemTags.SWORDS);
+
+        for (EquipmentSlot slot : EquipmentSlot.VALUES) {
+            jack.setItemSlot(slot, this.getItemBySlot(slot).copy());
+        }
+        jack.setPumpkinHat(pumpkinStack.copy());
+        if (!curios.isEmpty()) {
+            CuriosCompat.restoreAll(jack, curios, serverLevel);
+        }
+
+        jack.applyMaxHealthFrom(this.effectiveMaxHealthConfig());
+        if (!hasSword) {
+            float fallbackAttack = this.lastDamageTaken >= 0.0F ? this.lastDamageTaken : JACK_DEFAULT_ATTACK_DAMAGE;
+            jack.setBaseAttackDamage(fallbackAttack);
+        }
+
+        serverLevel.addFreshEntity(jack);
+        this.discard();
     }
 
     @Override
     public InteractionResult interact(Player player, InteractionHand hand, Vec3 location) {
         ItemStack held = player.getItemInHand(hand);
+        if (held.is(Items.JACK_O_LANTERN) && this.level() instanceof ServerLevel serverLevel) {
+            this.transformIntoJack(serverLevel, held.copyWithCount(1));
+            if (!player.getAbilities().instabuild) {
+                held.shrink(1);
+            }
+            return InteractionResult.CONSUME;
+        }
         if (held.is(Items.STICK) && !this.level().isClientSide()) {
             this.openMenuFor(player);
             return InteractionResult.CONSUME;
@@ -309,6 +446,9 @@ public class DummyEntity extends LivingEntity {
                 this.setCustomNameVisible(true);
                 if (!player.getAbilities().instabuild) {
                     held.shrink(1);
+                }
+                if (this.hasHerobrineNickname() && player instanceof ServerPlayer serverPlayer) {
+                    com.trainingdummy.event.HerobrinePrank.trigger(this, serverPlayer);
                 }
             }
             return InteractionResult.SUCCESS;
@@ -382,6 +522,9 @@ public class DummyEntity extends LivingEntity {
         if (this.displayMetricCustomized) {
             output.putString("DisplayMetric", this.displayMetric.name());
         }
+        if (this.lastDamageTaken >= 0.0F) {
+            output.putFloat("LastDamageTaken", this.lastDamageTaken);
+        }
     }
 
     @Override
@@ -392,6 +535,7 @@ public class DummyEntity extends LivingEntity {
         Optional<String> savedMetric = input.getString("DisplayMetric");
         this.displayMetricCustomized = savedMetric.isPresent();
         this.displayMetric = savedMetric.map(DummyEntity::parseDisplayMetric).orElse(DummyDisplayMetric.PER_HIT);
+        this.lastDamageTaken = input.getFloatOr("LastDamageTaken", -1.0F);
     }
 
     private static DummyDisplayMetric parseDisplayMetric(String name) {

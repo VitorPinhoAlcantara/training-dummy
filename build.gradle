@@ -67,6 +67,8 @@ neoForge {
             client()
 
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            systemProperty 'guideme.trainingdummy.guide.sources',
+                    file('src/main/resources/assets/trainingdummy/guides/trainingdummy/guide').absolutePath
         }
 
         server {
@@ -141,6 +143,9 @@ dependencies {
     localRuntime "maven.modrinth:artifacts:${artifacts_version}"
     localRuntime "maven.modrinth:jei:${jei_version}"
     localRuntime "maven.modrinth:jade:${jade_version}"
+    localRuntime "maven.modrinth:mahou-tsukai:${mahoutsukai_version}"
+    compileOnly "maven.modrinth:guideme:${guideme_version}"
+    localRuntime "maven.modrinth:guideme:${guideme_version}"
 }
 
 

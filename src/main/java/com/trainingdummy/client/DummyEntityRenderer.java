@@ -29,6 +29,10 @@ public class DummyEntityRenderer extends LivingEntityRenderer<DummyEntity, Dummy
     private static final Identifier IMMORTAL_SKIN =
             Identifier.fromNamespaceAndPath(TrainingDummyMod.MODID, "textures/entity/immortal_skin.png");
 
+    private static final String HEROBRINE_NICK = "Herobrine";
+    private static final Identifier HEROBRINE_SKIN =
+            Identifier.fromNamespaceAndPath(TrainingDummyMod.MODID, "textures/entity/herobrine_skin.png");
+
     private final HumanoidModel<DummyRenderState> wideModel;
     private final HumanoidModel<DummyRenderState> slimModel;
     private final PlayerSkinRenderCache skinRenderCache;
@@ -56,6 +60,11 @@ public class DummyEntityRenderer extends LivingEntityRenderer<DummyEntity, Dummy
         String name = entity.getSkinName();
         if (IMMORTAL_NICK.equals(name)) {
             state.skinTexture = IMMORTAL_SKIN;
+            state.skinModel = PlayerModelType.WIDE;
+            return;
+        }
+        if (HEROBRINE_NICK.equals(name)) {
+            state.skinTexture = HEROBRINE_SKIN;
             state.skinModel = PlayerModelType.WIDE;
             return;
         }

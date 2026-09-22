@@ -39,6 +39,7 @@ public final class DummyCombatEvents {
         if (amount <= 0.0F) {
             return;
         }
+        dummy.setLastDamageTaken(amount);
         if (event.getSource().getEntity() instanceof ServerPlayer attacker) {
             dummy.rememberAttacker(attacker);
         }

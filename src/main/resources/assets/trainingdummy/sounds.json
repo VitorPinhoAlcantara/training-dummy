@@ -9,12 +9,15 @@
   },
   "entity.dummy.danrique_hurt": {
     "sounds": [
-      "trainingdummy:danrique_hurt"
+      { "name": "trainingdummy:danrique_hurt", "weight": 80 },
+      { "name": "trainingdummy:danrique_hurt_2", "weight": 20 }
     ]
   },
   "entity.dummy.mitinhoplayer_hurt": {
     "sounds": [
-      "trainingdummy:mitinhoplayer_hurt"
+      { "name": "trainingdummy:mitinhoplayer_hurt", "weight": 50 },
+      { "name": "trainingdummy:mitinhoplayer_hurt_au", "weight": 45 },
+      { "name": "trainingdummy:mitinhoplayer_hurt_haaa", "weight": 5 }
     ]
   },
   "entity.dummy.nofaxu_hurt": {
@@ -34,7 +37,14 @@
   },
   "entity.dummy.jazaragamer_hurt": {
     "sounds": [
-      "trainingdummy:jazaragamer_hurt"
+      { "name": "trainingdummy:jazaragamer_hurt", "weight": 33 },
+      { "name": "trainingdummy:jazaragamer_hurt_aii", "weight": 33 },
+      { "name": "trainingdummy:jazaragamer_hurt_auau", "weight": 34 }
+    ]
+  },
+  "entity.dummy.jazaragamer_place": {
+    "sounds": [
+      "trainingdummy:jazaragamer_place"
     ]
   },
   "entity.dummy.meioelfo_hurt": {

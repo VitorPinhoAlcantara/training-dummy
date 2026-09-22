@@ -80,7 +80,7 @@ public final class CuriosCompat {
         return result;
     }
 
-    public static void restoreAll(DummyEntity dummy, List<DummyCurioEntry> entries, ServerLevel level) {
+    public static void restoreAll(LivingEntity dummy, List<DummyCurioEntry> entries, ServerLevel level) {
         if (entries.isEmpty()) {
             return;
         }

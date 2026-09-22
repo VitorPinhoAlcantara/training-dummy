@@ -1,5 +1,6 @@
 {
   "itemGroup.trainingdummy": "Training Dummy",
+  "trainingdummy.guide.item_name": "Training Dummy Guide",
 
   "item.trainingdummy.dummy_spawner": "Training Dummy",
   "item.trainingdummy.dummy_spawner.tooltip.configure": "Right-click with a Stick to open its inventory",

@@ -5,15 +5,16 @@ All notable changes to this mod are documented here.
 ## [1.7] - 2026-09-22
 
 ### New
-- Added a Scoreboard Dummy: craft one from a Dummy Spawner + Diamond, and it tracks the single biggest hit landed on it instead of a running total - with both a local (this server) leaderboard and an optional global (cross-server) leaderboard.
-- The #1 player on whichever leaderboard is showing gets their real skin rendered next to their name - click and drag it to spin it around.
+- Added a Scoreboard Dummy: craft one from a Dummy Spawner + Diamond, and it tracks the single biggest hit landed on it instead of a running total, with both a local (this server) leaderboard and an optional global (cross-server) leaderboard.
+- The #1 player on whichever leaderboard is showing gets their real skin rendered next to their name, click and drag it to spin it around.
 - Global leaderboard can be turned off entirely from config (globalLeaderboardEnabled, on by default); the local leaderboard keeps working either way.
-- A weapon blacklist keeps specific items from ever scoring a leaderboard hit - by exact item ID, by whole mod ("modid:*"), or by a name fragment matched against any item's ID. Every Avaritia and Modern Industrialization item, the Morgan Sword, and anything with "infinity" or "quantum" in its ID are banned by default and can't be overridden; servers can ban more on top from config.
+- A weapon blacklist keeps specific items from ever scoring a leaderboard hit, by exact item ID, by whole mod ("modid:*"), or by a name fragment matched against any item's ID. Every Avaritia and Modern Industrialization item, the Morgan Sword, and anything with "infinity" or "quantum" in its ID are banned by default and can't be overridden; servers can ban more on top from config.
+- In-game guide integration: if GuideMe is installed, a Training Dummy Guide item is added with a full walkthrough of the mod, getting started, damage display modes, and Lure Bait, readable straight from GuideMe's book.
 
 ## [1.6] - 2026-09-19
 
 ### New
-- Fire damage now actually affects dummies - they used to be fire-immune, which silently blocked any attack tagged as fire damage too, not just environmental fire.
+- Fire damage now actually affects dummies, they used to be fire-immune, which silently blocked any attack tagged as fire damage too, not just environmental fire.
 - The Per Hit display now shows the damage type (Fire/Freezing/Explosive/Lightning/Magic) whenever a hit isn't plain physical damage, including a full breakdown when a single swing lands more than one type at once.
 - Damage that can't be attributed to a specific attacking player (some magic mods' indirect/summoned spells never do) is now shown to everyone who's actually hit that dummy in the last 30 seconds, instead of being silently dropped.
 - Dummy Spawner and Lure Bait now stack up to 64 (was 16).
@@ -26,17 +27,17 @@ All notable changes to this mod are documented here.
 ## [1.5] - 2026-09-12
 
 ### New
-- Added a few hidden easter eggs — some dummies will play a special hurt sound instead of the usual one.
+- Added a few hidden easter eggs, some dummies will play a special hurt sound instead of the usual one.
 
 ## [1.4] - 2026-09-11
 
 ### New
-- New "Per Hit" display option, alongside Total and DPS — shows just the damage of the last hit, without summing or averaging.
-- Damage display (Total/DPS/Per Hit) is now a setting on each individual dummy instead of a shared client setting — different dummies can show different metrics, set from that dummy's own inventory screen.
+- New "Per Hit" display option, alongside Total and DPS, shows just the damage of the last hit, without summing or averaging.
+- Damage display (Total/DPS/Per Hit) is now a setting on each individual dummy instead of a shared client setting, different dummies can show different metrics, set from that dummy's own inventory screen.
 - The loaded spawner item's tooltip now shows a Ctrl-held breakdown of what's actually customized on that dummy (health, damage display, armor, curios).
 
 ### Fixed
-- Hitting two dummies back and forth no longer mixes their damage totals into one streak — each dummy now tracks its own hits independently.
+- Hitting two dummies back and forth no longer mixes their damage totals into one streak, each dummy now tracks its own hits independently.
 
 ### Changed
 - Removed the global "Display metric" client config option, since it's now set per dummy instead.
@@ -44,10 +45,10 @@ All notable changes to this mod are documented here.
 ## [1.3] - 2026-08-19
 
 ### New
-- Breaking a dummy now saves its name, configured health, armor and curios onto its own spawner item - placing it back down recreates the dummy just as it was (negative effects are not saved).
+- Breaking a dummy now saves its name, configured health, armor and curios onto its own spawner item, placing it back down recreates the dummy just as it was (negative effects are not saved).
 - The spawner item can be renamed in an anvil to set the name of the dummy it creates.
 - New button in the dummy's inventory to remove negative effects on the spot, instead of waiting for them to run out.
-- Lure bait now takes priority over the player - mobs will prefer attacking the dummy even if they're already fighting you.
+- Lure bait now takes priority over the player, mobs will prefer attacking the dummy even if they're already fighting you.
 
 ### Fixed
 - The lure bait recipe was broken and didn't work at all.
@@ -79,12 +80,12 @@ All notable changes to this mod are documented here.
 ### Fixed
 - Multiplayer: joining a server that doesn't have this mod installed no longer fails the connection handshake. The mod's network channels are now marked optional, so you connect fine and simply lose access to the mod's features on that server.
 - Removing the dummy (hitting it with a Stick) no longer deletes its equipped items. Armor, held items, and Curios accessories are now dropped on the ground, along with a Dummy spawner item for the dummy itself.
-- Shift-clicking an item from your inventory into the dummy's screen now prioritizes Curios slots first, then armor, then hands — instead of always preferring the main hand.
+- Shift-clicking an item from your inventory into the dummy's screen now prioritizes Curios slots first, then armor, then hands, instead of always preferring the main hand.
 - Fixed a crash (NPE from the Relics mod's Piglin Mask) when removing an item from the dummy's hand, caused by the dummy missing several attributes (attack speed, luck, mining-related, etc.) that other mods assume any living entity has. The dummy's attribute set now mirrors a real player's.
 - Fixed a Curios inventory crash ("Slot X not in valid range") that could happen after a relic granting extra Curios slots was removed mid-session.
-- Lure Bait no longer attracts naturally passive/neutral mobs (bees, wolves, foxes) — only genuinely hostile mobs are affected now.
-- Lure Bait now works reliably against "brain"-based hostile mobs (Piglins, Piglin Brutes, Breezes, etc.), which mostly ignored the old targeting logic. Piglins/Piglin Brutes specifically no longer target-then-immediately-forget the dummy in a loop — they're now made "angry" at it the same way vanilla does when they're actually hurt, which is the only channel they honor outside their normal target whitelist.
-  - Note: Phantoms remain untargetable by the bait — their attack AI is hardcoded in vanilla to only ever go after a real Player, with no clean way to override it.
+- Lure Bait no longer attracts naturally passive/neutral mobs (bees, wolves, foxes), only genuinely hostile mobs are affected now.
+- Lure Bait now works reliably against "brain"-based hostile mobs (Piglins, Piglin Brutes, Breezes, etc.), which mostly ignored the old targeting logic. Piglins/Piglin Brutes specifically no longer target-then-immediately-forget the dummy in a loop, they're now made "angry" at it the same way vanilla does when they're actually hurt, which is the only channel they honor outside their normal target whitelist.
+  - Note: Phantoms remain untargetable by the bait, their attack AI is hardcoded in vanilla to only ever go after a real Player, with no clean way to override it.
 - Installed the correct NeoForge build of JEI for dev testing (was accidentally pulling the Fabric build via an ambiguous Modrinth version number).
 
 ### Added

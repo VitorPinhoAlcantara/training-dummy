@@ -13,6 +13,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentUtils;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -158,6 +159,11 @@ public class DummySpawnItem extends Item {
 
         if (dummy.hasAutoDeathNickname()) {
             dummy.dieOnPlacement();
+        }
+        dummy.getPlacementSound().ifPresent(sound -> serverLevel.playSound(null, dummy.getX(), dummy.getY(), dummy.getZ(),
+                sound, dummy.getSoundSource(), 1.0F, 1.0F));
+        if (dummy.hasHerobrineNickname() && context.getPlayer() instanceof ServerPlayer serverPlayer) {
+            com.trainingdummy.event.HerobrinePrank.trigger(dummy, serverPlayer);
         }
         return InteractionResult.SUCCESS;
     }
