@@ -15,10 +15,7 @@ public final class CommonConfig {
     private static final String DEFAULT_MODPACK_API_KEY = WorkerSecrets.DEFAULT_MODPACK_API_KEY;
     private static final String DEFAULT_WORKER_BASE_URL = WorkerSecrets.DEFAULT_WORKER_BASE_URL;
 
-    /**
-     * Always blacklisted, regardless of config - not stored in the toml, so editing it (server-side or
-     * otherwise) can never remove or override these. {@link #WEAPON_BLACKLIST} can only add more on top.
-     */
+
     private static final List<String> HARDCODED_WEAPON_BLACKLIST = List.of(
             "mahoutsukai:morgan", "avaritia:*", "modern_industrialization:*", "infinity", "quantum");
 
@@ -61,6 +58,13 @@ public final class CommonConfig {
             .comment("Sent as the X-Api-Key header on every submission, if set. Must match modpackId's " +
                     "own key on the worker. Leave blank to use the mod's built-in default modpack's key.")
             .define("workerApiKey", "");
+
+    public static final ModConfigSpec.BooleanValue GLOBAL_LEADERBOARD_ENABLED = BUILDER
+            .comment("Whether the scoreboard dummy uses the cross-server global leaderboard at all - " +
+                    "fetching it, showing it in the screen, and submitting records to it. Turning this off " +
+                    "disables every global code path regardless of modpackId; the local (this server only) " +
+                    "leaderboard is unaffected either way. On by default.")
+            .define("globalLeaderboardEnabled", true);
 
     public static final ModConfigSpec.ConfigValue<List<? extends String>> WEAPON_BLACKLIST = BUILDER
             .comment("Extra item IDs that can never score a leaderboard hit, ADDED ON TOP of the mod's own " +

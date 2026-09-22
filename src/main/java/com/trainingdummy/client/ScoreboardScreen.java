@@ -1,18 +1,25 @@
 package com.trainingdummy.client;
 
+import com.mojang.authlib.GameProfile;
 import com.trainingdummy.rank.LeaderboardEntry;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.entity.LivingEntity;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 
 public class ScoreboardScreen extends Screen {
@@ -21,6 +28,13 @@ public class ScoreboardScreen extends Screen {
     private static final int ROW_HEIGHT = 12;
     private static final int LIST_TOP = 40;
     private static final int WIDGET_WIDTH = 240;
+
+
+    private static final int TOP_PREVIEW_WIDTH = 160;
+    private static final int TOP_PREVIEW_HEIGHT = 240;
+    private static final int TOP_PREVIEW_SCALE = 90;
+    
+    private static final float PREVIEW_ROTATION_SENSITIVITY = -1.0F;
 
     private static boolean lastViewedGlobal = true;
 
@@ -32,6 +46,11 @@ public class ScoreboardScreen extends Screen {
 
     private boolean showingGlobal;
     private Button toggleButton;
+    private LivingEntity topPreviewEntity;
+    private UUID topPreviewUuid;
+    private String topPreviewName = "";
+    private float previewYaw = 180.0F;
+    private boolean rotatingPreview;
 
     public ScoreboardScreen(List<LeaderboardEntry> localEntries, List<LeaderboardEntry> globalEntries,
                              boolean globalAvailable, String modpackDisplayName) {
@@ -81,7 +100,11 @@ public class ScoreboardScreen extends Screen {
 
         if (entries.isEmpty()) {
             this.contentWidgets.add(this.addCenteredLine(Component.translatable("gui.trainingdummy.empty"), LIST_TOP));
+            this.topPreviewEntity = null;
+            this.topPreviewUuid = null;
+            this.topPreviewName = "";
         } else {
+            this.updateTopPreviewEntity(entries.get(0));
             for (int i = 0; i < entries.size(); i++) {
                 LeaderboardEntry entry = entries.get(i);
                 MutableComponent name = Component.literal(entry.playerName());
@@ -94,6 +117,94 @@ public class ScoreboardScreen extends Screen {
                 this.contentWidgets.add(this.addCenteredLine(line, LIST_TOP + i * ROW_HEIGHT));
             }
         }
+    }
+
+    private void updateTopPreviewEntity(LeaderboardEntry topEntry) {
+        this.topPreviewName = topEntry.playerName();
+        if (this.minecraft == null || this.minecraft.level == null) {
+            return;
+        }
+        if (topEntry.playerUuid().equals(this.topPreviewUuid)) {
+            return;
+        }
+        this.topPreviewUuid = topEntry.playerUuid();
+        this.topPreviewEntity = new RankPreviewPlayer(this.minecraft.level,
+                new GameProfile(topEntry.playerUuid(), topEntry.playerName()));
+    }
+
+    @Override
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+
+        if (this.topPreviewEntity != null) {
+            int[] bounds = this.previewBounds();
+            int x0 = bounds[0];
+            int y0 = bounds[1];
+            int x1 = bounds[2];
+            int y1 = bounds[3];
+            float centerX = (x0 + x1) / 2.0F;
+            float centerY = (y0 + y1) / 2.0F;
+
+            this.topPreviewEntity.setXRot(0.0F);
+            this.topPreviewEntity.setYRot(this.previewYaw);
+            this.topPreviewEntity.yBodyRot = this.previewYaw;
+            this.topPreviewEntity.yHeadRot = this.previewYaw;
+            this.topPreviewEntity.yHeadRotO = this.previewYaw;
+
+            float entityScale = this.topPreviewEntity.getScale();
+            Vector3f translation = new Vector3f(0.0F, this.topPreviewEntity.getBbHeight() / 2.0F + 0.0625F * entityScale, 0.0F);
+            Quaternionf rotation = new Quaternionf().rotateZ((float) Math.PI);
+
+            guiGraphics.enableScissor(x0, y0, x1, y1);
+            InventoryScreen.renderEntityInInventory(guiGraphics, centerX, centerY, TOP_PREVIEW_SCALE / entityScale,
+                    translation, rotation, null, this.topPreviewEntity);
+            guiGraphics.disableScissor();
+
+            Component nameLabel = Component.literal(this.topPreviewName).withStyle(ChatFormatting.GREEN);
+            guiGraphics.drawCenteredString(this.font, nameLabel, (x0 + x1) / 2, y0 - 12, 0xFFFFFF);
+        }
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (super.mouseClicked(mouseX, mouseY, button)) {
+            return true;
+        }
+        if (button == 0 && this.topPreviewEntity != null && this.isOverTopPreview(mouseX, mouseY)) {
+            this.rotatingPreview = true;
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        if (this.rotatingPreview) {
+            this.previewYaw += (float) dragX * PREVIEW_ROTATION_SENSITIVITY;
+            return true;
+        }
+        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (button == 0) {
+            this.rotatingPreview = false;
+        }
+        return super.mouseReleased(mouseX, mouseY, button);
+    }
+
+    private boolean isOverTopPreview(double mouseX, double mouseY) {
+        int[] bounds = this.previewBounds();
+        return mouseX >= bounds[0] && mouseX < bounds[2] && mouseY >= bounds[1] && mouseY < bounds[3];
+    }
+
+    private int[] previewBounds() {
+        int x1 = this.width / 2 - WIDGET_WIDTH / 2 - 8;
+        int x0 = Math.max(4, x1 - TOP_PREVIEW_WIDTH);
+        int y0 = Math.max(20, this.height / 2 - TOP_PREVIEW_HEIGHT / 2);
+        int y1 = y0 + TOP_PREVIEW_HEIGHT;
+        return new int[] {x0, y0, x1, y1};
     }
 
     private Component globalTitle() {

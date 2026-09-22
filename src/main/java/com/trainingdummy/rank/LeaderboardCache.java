@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 
 public final class LeaderboardCache {
@@ -34,7 +35,7 @@ public final class LeaderboardCache {
     }
 
     public static boolean globalAvailable() {
-        return !CommonConfig.effectiveModpackId().isBlank();
+        return CommonConfig.GLOBAL_LEADERBOARD_ENABLED.get() && !CommonConfig.effectiveModpackId().isBlank();
     }
 
     public static List<LeaderboardEntry> localEntries() {
@@ -71,15 +72,15 @@ public final class LeaderboardCache {
         return qualifies(globalEntries, playerName, damage);
     }
 
-    public static synchronized int applyLocalUpdate(String playerName, float damage) {
-        UpdateResult result = computeUpdate(localEntries, playerName, damage);
+    public static synchronized int applyLocalUpdate(String playerName, UUID playerUuid, float damage) {
+        UpdateResult result = computeUpdate(localEntries, playerName, playerUuid, damage);
         localEntries = result.entries();
         LeaderboardPersistence.save();
         return result.rank();
     }
 
-    public static synchronized int applyGlobalOptimisticUpdate(String playerName, float damage) {
-        UpdateResult result = computeUpdate(globalEntries, playerName, damage);
+    public static synchronized int applyGlobalOptimisticUpdate(String playerName, UUID playerUuid, float damage) {
+        UpdateResult result = computeUpdate(globalEntries, playerName, playerUuid, damage);
         globalEntries = result.entries();
         return result.rank();
     }
@@ -123,10 +124,10 @@ public final class LeaderboardCache {
         return entries.size() < TOP_N || damage > entries.get(entries.size() - 1).damage();
     }
 
-    private static UpdateResult computeUpdate(List<LeaderboardEntry> current, String playerName, float damage) {
+    private static UpdateResult computeUpdate(List<LeaderboardEntry> current, String playerName, UUID playerUuid, float damage) {
         List<LeaderboardEntry> updated = new ArrayList<>(current);
         updated.removeIf(entry -> entry.playerName().equals(playerName));
-        LeaderboardEntry newEntry = new LeaderboardEntry(playerName, damage);
+        LeaderboardEntry newEntry = new LeaderboardEntry(playerName, playerUuid, damage);
         updated.add(newEntry);
         updated.sort(Comparator.comparingDouble(LeaderboardEntry::damage).reversed());
         List<LeaderboardEntry> trimmed = updated.size() > TOP_N ? updated.subList(0, TOP_N) : updated;

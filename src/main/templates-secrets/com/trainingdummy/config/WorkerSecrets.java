@@ -1,10 +1,5 @@
 package com.trainingdummy.config;
 
-/**
- * Generated at build time by the {@code generateWorkerSecrets} Gradle task from secrets.properties
- * (gitignored, never committed - see secrets.properties.example). This file itself lives under
- * build/ and is regenerated on every build; don't edit it directly.
- */
 final class WorkerSecrets {
 
     static final String DEFAULT_MODPACK_ID = "${worker_default_modpack_id}";

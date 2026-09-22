@@ -45,12 +45,12 @@ public final class ScoreboardCombatEvents {
         String playerName = attacker.getGameProfile().getName();
 
         if (LeaderboardCache.qualifiesLocal(playerName, amount)) {
-            int localRank = LeaderboardCache.applyLocalUpdate(playerName, amount);
+            int localRank = LeaderboardCache.applyLocalUpdate(playerName, attacker.getUUID(), amount);
             attacker.sendSystemMessage(Component.translatable("trainingdummy.record.local", localRank));
         }
 
         if (LeaderboardCache.globalAvailable() && LeaderboardCache.qualifiesGlobal(playerName, amount)) {
-            int globalRank = LeaderboardCache.applyGlobalOptimisticUpdate(playerName, amount);
+            int globalRank = LeaderboardCache.applyGlobalOptimisticUpdate(playerName, attacker.getUUID(), amount);
             attacker.sendSystemMessage(Component.translatable("trainingdummy.record.achieved", globalRank));
 
             PlayerCombatSnapshot snapshot = PlayerCombatSnapshot.capture(attacker, amount);

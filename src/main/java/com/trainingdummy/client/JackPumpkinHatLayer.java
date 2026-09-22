@@ -11,9 +11,7 @@ import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 
-// Renders the Jack o'Lantern as a purely cosmetic head item, independent of
-// whatever is actually equipped in EquipmentSlot.HEAD, so a real helmet the
-// player equipped keeps contributing its armor stats.
+
 public class JackPumpkinHatLayer extends RenderLayer<JackDummyEntity, PlayerModel<JackDummyEntity>> {
 
     private final ItemInHandRenderer itemInHandRenderer;

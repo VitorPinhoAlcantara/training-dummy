@@ -102,6 +102,8 @@
   "trainingdummy.configuration.workerBaseUrl.tooltip": "URL base do worker do ranking (ex: http://127.0.0.1:8787 pra um wrangler dev que você mesmo está rodando). Deixe em branco pra usar o worker embutido no mod.",
   "trainingdummy.configuration.workerApiKey": "Chave de API do worker",
   "trainingdummy.configuration.workerApiKey.tooltip": "Enviada como header X-Api-Key em toda submissão, se definida. Precisa bater com a chave própria do modpackId no worker. Deixe em branco pra usar a chave do modpack padrão embutido no mod.",
+  "trainingdummy.configuration.globalLeaderboardEnabled": "Ativar ranking global",
+  "trainingdummy.configuration.globalLeaderboardEnabled.tooltip": "Liga ou desliga o ranking global entre servidores por completo. Desligado desativa buscar, mostrar e enviar recordes pra ele; o ranking local continua funcionando de qualquer forma. Vem ligado por padrão.",
   "trainingdummy.configuration.weaponBlacklist": "Lista negra de armas (extra)",
   "trainingdummy.configuration.weaponBlacklist.tooltip": "IDs de item extras banidos, ADICIONADOS por cima da lista negra fixa do mod (não dá pra remover ou sobrescrever ela). IDs exatos (\"minecraft:netherite_sword\"), um mod inteiro com \"modid:*\" (\"avaritia:*\"), ou - sem \":\" - um trecho do ID (\"sword\")."
 }

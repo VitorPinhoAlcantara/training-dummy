@@ -21,7 +21,7 @@ public final class LocalStubLeaderboardService implements LeaderboardService {
     @Override
     public Optional<List<LeaderboardEntry>> fetchTop10(String modpackId) {
         return Optional.of(this.byModpack.getOrDefault(modpackId, List.of()).stream()
-                .map(snapshot -> new LeaderboardEntry(snapshot.playerName(), snapshot.damage()))
+                .map(snapshot -> new LeaderboardEntry(snapshot.playerName(), snapshot.playerUuid(), snapshot.damage()))
                 .toList());
     }
 

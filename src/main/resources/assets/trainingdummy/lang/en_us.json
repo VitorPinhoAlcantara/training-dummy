@@ -102,6 +102,8 @@
   "trainingdummy.configuration.workerBaseUrl.tooltip": "Base URL of the leaderboard worker (e.g. http://127.0.0.1:8787 for a local wrangler dev you're running yourself). Leave blank to use the mod's built-in worker.",
   "trainingdummy.configuration.workerApiKey": "Worker API key",
   "trainingdummy.configuration.workerApiKey.tooltip": "Sent as the X-Api-Key header on every submission, if set. Must match modpackId's own key on the worker. Leave blank to use the mod's built-in default modpack's key.",
+  "trainingdummy.configuration.globalLeaderboardEnabled": "Enable global leaderboard",
+  "trainingdummy.configuration.globalLeaderboardEnabled.tooltip": "Turns the cross-server global leaderboard on or off entirely. Off disables fetching, showing and submitting to it; the local leaderboard keeps working either way. On by default.",
   "trainingdummy.configuration.weaponBlacklist": "Weapon blacklist (extra)",
   "trainingdummy.configuration.weaponBlacklist.tooltip": "Extra item IDs banned from scoring, ADDED ON TOP of the mod's built-in blacklist (can't remove or override it). Exact IDs (\"minecraft:netherite_sword\"), a whole mod with \"modid:*\" (\"avaritia:*\"), or - with no \":\" - a substring match against every item ID (\"sword\")."
 }
