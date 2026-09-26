@@ -46,7 +46,7 @@ public class DummyEntityRenderer extends LivingEntityRenderer<DummyEntity, Playe
     public void render(DummyEntity entity, float entityYaw, float partialTicks, PoseStack poseStack,
                         MultiBufferSource buffer, int packedLight) {
         String name = entity.getSkinName();
-        this.model = IMMORTAL_NICK.equals(name) || HEROBRINE_NICK.equals(name)
+        this.model = IMMORTAL_NICK.equalsIgnoreCase(name) || HEROBRINE_NICK.equalsIgnoreCase(name)
                 ? this.wideModel
                 : DummySkinCache.getSkin(name)
                         .map(skin -> skin.model() == PlayerSkin.Model.SLIM ? this.slimModel : this.wideModel)
@@ -57,10 +57,10 @@ public class DummyEntityRenderer extends LivingEntityRenderer<DummyEntity, Playe
     @Override
     public ResourceLocation getTextureLocation(DummyEntity entity) {
         String name = entity.getSkinName();
-        if (IMMORTAL_NICK.equals(name)) {
+        if (IMMORTAL_NICK.equalsIgnoreCase(name)) {
             return IMMORTAL_SKIN;
         }
-        if (HEROBRINE_NICK.equals(name)) {
+        if (HEROBRINE_NICK.equalsIgnoreCase(name)) {
             return HEROBRINE_SKIN;
         }
         return DummySkinCache.getSkin(name)
