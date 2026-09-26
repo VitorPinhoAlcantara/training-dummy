@@ -146,6 +146,12 @@ dependencies {
     localRuntime "maven.modrinth:mahou-tsukai:${mahoutsukai_version}"
     compileOnly "maven.modrinth:guideme:${guideme_version}"
     localRuntime "maven.modrinth:guideme:${guideme_version}"
+    localRuntime "maven.modrinth:apotheosis:${apotheosis_version}"
+    localRuntime "maven.modrinth:patchouli:${patchouli_version}"
+    localRuntime "maven.modrinth:placebo:${placebo_version}"
+    localRuntime "maven.modrinth:apothic-attributes:${apothic_attributes_version}"
+    localRuntime "maven.modrinth:apothic-enchanting:${apothic_enchanting_version}"
+    localRuntime "maven.modrinth:apothic-spawners:${apothic_spawners_version}"
 }
 
 

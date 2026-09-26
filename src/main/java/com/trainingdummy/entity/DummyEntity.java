@@ -205,7 +205,7 @@ public class DummyEntity extends LivingEntity {
     private static final String MITINHO_NICKNAME = "MitinhoPlayer";
 
     public boolean hasMitinhoNickname() {
-        return MITINHO_NICKNAME.equals(this.getSkinName());
+        return MITINHO_NICKNAME.equalsIgnoreCase(this.getSkinName());
     }
 
     private boolean isMorganKill(DamageSource source) {
@@ -260,7 +260,7 @@ public class DummyEntity extends LivingEntity {
     private static final String HEROBRINE_NICKNAME = "Herobrine";
 
     public boolean hasHerobrineNickname() {
-        return HEROBRINE_NICKNAME.equals(this.getSkinName());
+        return HEROBRINE_NICKNAME.equalsIgnoreCase(this.getSkinName());
     }
 
     private static final double HEROBRINE_LEVITATE_HEIGHT = 3.0D;
@@ -291,7 +291,7 @@ public class DummyEntity extends LivingEntity {
 
 
     public boolean hasAutoDeathNickname() {
-        return AUTO_DEATH_NICKNAME.equals(this.getSkinName());
+        return AUTO_DEATH_NICKNAME.equalsIgnoreCase(this.getSkinName());
     }
 
 

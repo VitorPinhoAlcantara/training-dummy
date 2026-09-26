@@ -58,12 +58,12 @@ public class DummyEntityRenderer extends LivingEntityRenderer<DummyEntity, Dummy
         HumanoidMobRenderer.extractHumanoidRenderState(entity, state, partialTicks, this.itemModelResolver);
 
         String name = entity.getSkinName();
-        if (IMMORTAL_NICK.equals(name)) {
+        if (IMMORTAL_NICK.equalsIgnoreCase(name)) {
             state.skinTexture = IMMORTAL_SKIN;
             state.skinModel = PlayerModelType.WIDE;
             return;
         }
-        if (HEROBRINE_NICK.equals(name)) {
+        if (HEROBRINE_NICK.equalsIgnoreCase(name)) {
             state.skinTexture = HEROBRINE_SKIN;
             state.skinModel = PlayerModelType.WIDE;
             return;
