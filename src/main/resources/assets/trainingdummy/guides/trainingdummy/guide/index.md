@@ -54,3 +54,21 @@ Hold Lure Bait in a dummy's main hand to make nearby hostile mobs target it inst
 <Column alignItems="center" fullWidth={true}>
 <ItemImage id="trainingdummy:lure_bait" scale="2.5" />
 </Column>
+
+---
+
+## Scoreboard Dummy
+
+A variant that records the single biggest hit landed on it and ranks it on a **local** top 10
+leaderboard (and a weekly **global** one, if the server enables it). Craft it with a Dummy Spawner
+and a Diamond.
+
+See the full details on the [Scoreboard Dummy](scoreboard.md) page.
+
+---
+
+## Easter Eggs
+
+There are a few hidden surprises in the mod - certain dummy nicknames and even an item trick do
+something special. We won't spoil them here, but you can find the list on the
+[Easter Eggs](easter-eggs.md) page.

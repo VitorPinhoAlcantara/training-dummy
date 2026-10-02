@@ -39,6 +39,15 @@ public final class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> MEIOELFO_HURT = SOUND_EVENTS.register("entity.dummy.meioelfo_hurt",
             () -> SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath(TrainingDummyMod.MODID, "entity.dummy.meioelfo_hurt")));
 
+    public static final DeferredHolder<SoundEvent, SoundEvent> TOPIINHO_HURT = SOUND_EVENTS.register("entity.dummy.topiinho_hurt",
+            () -> SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath(TrainingDummyMod.MODID, "entity.dummy.topiinho_hurt")));
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> GETOXYZ_HURT = SOUND_EVENTS.register("entity.dummy.getoxyz_hurt",
+            () -> SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath(TrainingDummyMod.MODID, "entity.dummy.getoxyz_hurt")));
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> LE_RAI_HURT = SOUND_EVENTS.register("entity.dummy.le_rai_hurt",
+            () -> SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath(TrainingDummyMod.MODID, "entity.dummy.le_rai_hurt")));
+
     public static final DeferredHolder<SoundEvent, SoundEvent> JAZARAGAMER_PLACE = SOUND_EVENTS.register("entity.dummy.jazaragamer_place",
             () -> SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath(TrainingDummyMod.MODID, "entity.dummy.jazaragamer_place")));
 

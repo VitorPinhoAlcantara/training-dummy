@@ -36,7 +36,7 @@ total, and reports it to a leaderboard.
 
 Every server keeps its own **local** leaderboard, top 10 hits only.
 
-If the server owner has it set up, there's also a **global** leaderboard shared across every
+There's also a **global** leaderboard shared across every
 server. The global leaderboard resets every week; the local one never does.
 
 The #1 player on whichever board is showing gets their skin rendered next to their name; click and drag

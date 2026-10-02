@@ -351,15 +351,18 @@ public class DummyEntity extends LivingEntity {
         }
     }
 
-    private static final java.util.Map<String, java.util.function.Supplier<SoundEvent>> NAMED_HURT_SOUNDS = java.util.Map.of(
-            "Danrique", ModSounds.DANRIQUE_HURT,
-            "MitinhoPlayer", ModSounds.MITINHOPLAYER_HURT,
-            "Nofaxu", ModSounds.NOFAXU_HURT,
-            "BrunimNeets", ModSounds.BRUNIMNEETS_HURT,
-            "mamao170", ModSounds.MAMAO170_HURT,
-            "JazaraGamer", ModSounds.JAZARAGAMER_HURT,
-            "MeioElfo", ModSounds.MEIOELFO_HURT,
-            "ForeverPlayerG", ModSounds.FOREVERPLAYERG_HURT
+    private static final java.util.Map<String, java.util.function.Supplier<SoundEvent>> NAMED_HURT_SOUNDS = java.util.Map.ofEntries(
+            java.util.Map.entry("Danrique", ModSounds.DANRIQUE_HURT),
+            java.util.Map.entry("MitinhoPlayer", ModSounds.MITINHOPLAYER_HURT),
+            java.util.Map.entry("Nofaxu", ModSounds.NOFAXU_HURT),
+            java.util.Map.entry("BrunimNeets", ModSounds.BRUNIMNEETS_HURT),
+            java.util.Map.entry("mamao170", ModSounds.MAMAO170_HURT),
+            java.util.Map.entry("JazaraGamer", ModSounds.JAZARAGAMER_HURT),
+            java.util.Map.entry("MeioElfo", ModSounds.MEIOELFO_HURT),
+            java.util.Map.entry("ForeverPlayerG", ModSounds.FOREVERPLAYERG_HURT),
+            java.util.Map.entry("Topiinho", ModSounds.TOPIINHO_HURT),
+            java.util.Map.entry("getoxyz", ModSounds.GETOXYZ_HURT),
+            java.util.Map.entry("Le_Rai", ModSounds.LE_RAI_HURT)
     );
 
     @Override

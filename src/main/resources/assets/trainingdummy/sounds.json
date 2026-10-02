@@ -61,5 +61,22 @@
       { "name": "trainingdummy:meioelfo_hurt_2", "weight": 20 },
       { "name": "trainingdummy:meioelfo_hurt_3", "weight": 5 }
     ]
+  },
+  "entity.dummy.topiinho_hurt": {
+    "sounds": [
+      "trainingdummy:topiinho_hurt"
+    ]
+  },
+  "entity.dummy.getoxyz_hurt": {
+    "sounds": [
+      "trainingdummy:getoxyz_hurt"
+    ]
+  },
+  "entity.dummy.le_rai_hurt": {
+    "sounds": [
+      { "name": "trainingdummy:le_rai_hurt_aiaiaiaiai", "weight": 1 },
+      { "name": "trainingdummy:le_rai_hurt_hanaoveipara", "weight": 1 },
+      { "name": "trainingdummy:le_rai_hurt_olhaocara", "weight": 1 }
+    ]
   }
 }

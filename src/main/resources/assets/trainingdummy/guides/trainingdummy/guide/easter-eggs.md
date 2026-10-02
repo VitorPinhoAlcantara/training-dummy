@@ -15,6 +15,7 @@ A few dummy nicknames (and one item trick) do something special. Nicknames are c
 
 These dummies play a custom hit sound instead of the default one.
 
+- Topiinho
 - Danrique
 - MitinhoPlayer
 - JazaraGamer
@@ -23,6 +24,8 @@ These dummies play a custom hit sound instead of the default one.
 - MeioElfo
 - BrunimNeets
 - ForeverPlayerG
+- Le_Rai
+- getoxyz
 
 ---
 
@@ -30,8 +33,7 @@ These dummies play a custom hit sound instead of the default one.
 
 ### Immortal
 
-Rename a dummy "Immortal" and place it down. ...but is it, though? There's only one way to
-find out.
+Rename a dummy "Immortal" and place it down. The name might be a little misleading.
 
 <br />
 
@@ -43,4 +45,4 @@ Everyone knows you don't name a dummy "Herobrine". Don't be the one who finds ou
 
 ### Jack o'Lantern
 
-Some dummies just really need a Jack o'Lantern for a head. Try handing one over - literally.
+Some dummies just really need a Jack o'Lantern for a head. Try handing one over.
