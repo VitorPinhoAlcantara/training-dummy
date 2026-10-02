@@ -7,7 +7,7 @@ navigation:
 
 # Easter Eggs
 
-A few dummy nicknames (and one item trick) do something special. Nicknames are case-sensitive.
+A few dummy nicknames (and one item trick) do something special. Nicknames aren't case-sensitive.
 
 ---
 
