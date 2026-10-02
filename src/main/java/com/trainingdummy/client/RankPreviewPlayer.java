@@ -14,6 +14,6 @@ final class RankPreviewPlayer extends RemotePlayer {
 
     @Override
     public PlayerSkin getSkin() {
-        return RankSkinCache.resolve(this.getUUID(), this.getGameProfile().name());
+        return RankSkinCache.resolve(this.getUUID());
     }
 }

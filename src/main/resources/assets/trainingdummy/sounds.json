@@ -27,7 +27,15 @@
   },
   "entity.dummy.brunimneets_hurt": {
     "sounds": [
-      "trainingdummy:brunimneets_hurt"
+      { "name": "trainingdummy:brunimneets_hurt_cafezinho", "weight": 1 },
+      { "name": "trainingdummy:brunimneets_hurt_daddy", "weight": 1 },
+      { "name": "trainingdummy:brunimneets_hurt_uwu", "weight": 1 },
+      { "name": "trainingdummy:brunimneets_hurt_saldade", "weight": 1 }
+    ]
+  },
+  "entity.dummy.foreverplayerg_hurt": {
+    "sounds": [
+      "trainingdummy:foreverplayerg_hurt"
     ]
   },
   "entity.dummy.mamao170_hurt": {

@@ -5,7 +5,6 @@ import com.trainingdummy.config.ClientConfig;
 import com.trainingdummy.config.CommonConfig;
 import com.trainingdummy.entity.DummyEntity;
 import com.trainingdummy.entity.JackDummyEntity;
-import com.trainingdummy.guide.GuideIntegration;
 import com.trainingdummy.network.DummyClearEffectsPayload;
 import com.trainingdummy.network.DummyCuriosPagePayload;
 import com.trainingdummy.network.DummyDamagePayload;
@@ -27,7 +26,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
@@ -53,18 +52,11 @@ public class TrainingDummyMod {
 
         modEventBus.addListener(this::registerAttributes);
         modEventBus.addListener(this::registerPayloads);
-        modEventBus.addListener(this::commonSetup);
 
         modContainer.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
         modContainer.registerConfig(ModConfig.Type.COMMON, CommonConfig.SPEC);
 
         this.widenVanillaAttributeRanges();
-    }
-
-    private void commonSetup(FMLCommonSetupEvent event) {
-        if (GuideIntegration.isLoaded()) {
-            event.enqueueWork(GuideIntegration::register);
-        }
     }
 
     private void widenVanillaAttributeRanges() {
@@ -88,7 +80,11 @@ public class TrainingDummyMod {
 
         PayloadRegistrar registrar = event.registrar("3").optional();
         registrar.playToClient(DummyDamagePayload.TYPE, DummyDamagePayload.STREAM_CODEC,
-                com.trainingdummy.client.ClientPayloadHandler::handleDummyDamage);
+                (payload, context) -> {
+                    if (FMLEnvironment.getDist().isClient()) {
+                        com.trainingdummy.client.ClientPayloadHandler.handleDummyDamage(payload, context);
+                    }
+                });
         registrar.playToServer(DummyCuriosPagePayload.TYPE, DummyCuriosPagePayload.STREAM_CODEC,
                 ServerPayloadHandler::handleCuriosPage);
         registrar.playToServer(DummySetMaxHealthPayload.TYPE, DummySetMaxHealthPayload.STREAM_CODEC,
@@ -99,6 +95,10 @@ public class TrainingDummyMod {
                 ServerPayloadHandler::handleClearEffects);
         registrar.playToClient(com.trainingdummy.network.OpenScoreboardScreenPayload.TYPE,
                 com.trainingdummy.network.OpenScoreboardScreenPayload.STREAM_CODEC,
-                com.trainingdummy.client.ClientPayloadHandler::handleOpenScoreboardScreen);
+                (payload, context) -> {
+                    if (FMLEnvironment.getDist().isClient()) {
+                        com.trainingdummy.client.ClientPayloadHandler.handleOpenScoreboardScreen(payload, context);
+                    }
+                });
     }
 }

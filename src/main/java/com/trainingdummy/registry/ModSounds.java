@@ -27,6 +27,9 @@ public final class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> BRUNIMNEETS_HURT = SOUND_EVENTS.register("entity.dummy.brunimneets_hurt",
             () -> SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath(TrainingDummyMod.MODID, "entity.dummy.brunimneets_hurt")));
 
+    public static final DeferredHolder<SoundEvent, SoundEvent> FOREVERPLAYERG_HURT = SOUND_EVENTS.register("entity.dummy.foreverplayerg_hurt",
+            () -> SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath(TrainingDummyMod.MODID, "entity.dummy.foreverplayerg_hurt")));
+
     public static final DeferredHolder<SoundEvent, SoundEvent> MAMAO170_HURT = SOUND_EVENTS.register("entity.dummy.mamao170_hurt",
             () -> SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath(TrainingDummyMod.MODID, "entity.dummy.mamao170_hurt")));
 

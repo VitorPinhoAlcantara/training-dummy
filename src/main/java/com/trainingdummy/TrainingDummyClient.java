@@ -4,13 +4,16 @@ import com.trainingdummy.client.DummyEntityRenderer;
 import com.trainingdummy.client.DummyHudOverlay;
 import com.trainingdummy.client.DummyScreen;
 import com.trainingdummy.client.JackDummyEntityRenderer;
+import com.trainingdummy.guide.GuideIntegration;
 import com.trainingdummy.registry.ModEntities;
 import com.trainingdummy.registry.ModMenus;
 import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
@@ -21,8 +24,15 @@ import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 @EventBusSubscriber(modid = TrainingDummyMod.MODID, value = Dist.CLIENT)
 public class TrainingDummyClient {
 
-    public TrainingDummyClient(ModContainer container) {
+    public TrainingDummyClient(IEventBus modEventBus, ModContainer container) {
         container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
+        modEventBus.addListener(TrainingDummyClient::clientSetup);
+    }
+
+    private static void clientSetup(FMLClientSetupEvent event) {
+        if (GuideIntegration.isLoaded()) {
+            event.enqueueWork(GuideIntegration::register);
+        }
     }
 
     @SubscribeEvent

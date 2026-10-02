@@ -359,7 +359,7 @@ public class DummyEntity extends LivingEntity {
             "mamao170", ModSounds.MAMAO170_HURT,
             "JazaraGamer", ModSounds.JAZARAGAMER_HURT,
             "MeioElfo", ModSounds.MEIOELFO_HURT,
-            "ForeverPlayerG", ModSounds.BRUNIMNEETS_HURT
+            "ForeverPlayerG", ModSounds.FOREVERPLAYERG_HURT
     );
 
     @Override

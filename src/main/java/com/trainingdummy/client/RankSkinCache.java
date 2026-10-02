@@ -1,8 +1,9 @@
 package com.trainingdummy.client;
 
-import com.mojang.authlib.GameProfile;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.PlayerSkinRenderCache;
 import net.minecraft.world.entity.player.PlayerSkin;
+import net.minecraft.world.item.component.ResolvableProfile;
 
 import java.util.Map;
 import java.util.UUID;
@@ -11,12 +12,12 @@ import java.util.function.Supplier;
 
 final class RankSkinCache {
 
-    private static final Map<UUID, Supplier<PlayerSkin>> LOOKUPS = new ConcurrentHashMap<>();
+    private static final Map<UUID, Supplier<PlayerSkinRenderCache.RenderInfo>> LOOKUPS = new ConcurrentHashMap<>();
 
-    static PlayerSkin resolve(UUID uuid, String name) {
+    static PlayerSkin resolve(UUID uuid) {
         return LOOKUPS.computeIfAbsent(uuid, id ->
-                Minecraft.getInstance().getSkinManager().createLookup(new GameProfile(id, name), false)
-        ).get();
+                Minecraft.getInstance().playerSkinRenderCache().createLookup(ResolvableProfile.createUnresolved(id))
+        ).get().playerSkin();
     }
 
     private RankSkinCache() {
