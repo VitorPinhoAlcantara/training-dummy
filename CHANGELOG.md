@@ -2,6 +2,22 @@
 
 All notable changes to this mod are documented here.
 
+## [1.8] - 2026-10-02
+
+### Fixed
+- Fixed the mod crashing dedicated servers on load.
+- Fixed the Scoreboard Dummy's crafting recipe.
+- Fixed the #1 leaderboard player always showing the default skin instead of their real one.
+- Hidden nickname easter eggs are now case-insensitive, matching the audio ones.
+- BrunimNeets and ForeverPlayerG no longer share the same hurt sound.
+
+### New
+- 3 new hidden nickname easter eggs with their own hurt sounds: Topiinho, getoxyz, and Le_Rai (3 variants).
+- BrunimNeets got 4 new sound variants, replacing the old single one.
+
+### Changed
+- Normalized and increased the volume of every sound in the mod.
+
 ## [1.7] - 2026-09-22
 
 ### New
