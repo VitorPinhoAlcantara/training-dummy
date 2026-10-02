@@ -27,7 +27,32 @@
   },
   "entity.dummy.brunimneets_hurt": {
     "sounds": [
-      "trainingdummy:brunimneets_hurt"
+      { "name": "trainingdummy:brunimneets_hurt_cafezinho", "weight": 25 },
+      { "name": "trainingdummy:brunimneets_hurt_daddy", "weight": 25 },
+      { "name": "trainingdummy:brunimneets_hurt_saldade", "weight": 25 },
+      { "name": "trainingdummy:brunimneets_hurt_uwu", "weight": 25 }
+    ]
+  },
+  "entity.dummy.foreverplayerg_hurt": {
+    "sounds": [
+      "trainingdummy:foreverplayerg_hurt"
+    ]
+  },
+  "entity.dummy.topiinho_hurt": {
+    "sounds": [
+      "trainingdummy:topiinho_hurt"
+    ]
+  },
+  "entity.dummy.getoxyz_hurt": {
+    "sounds": [
+      "trainingdummy:getoxyz_hurt"
+    ]
+  },
+  "entity.dummy.le_rai_hurt": {
+    "sounds": [
+      { "name": "trainingdummy:le_rai_hurt_aiaiaiaiai", "weight": 33 },
+      { "name": "trainingdummy:le_rai_hurt_hanaoveipara", "weight": 33 },
+      { "name": "trainingdummy:le_rai_hurt_olhaocara", "weight": 34 }
     ]
   },
   "entity.dummy.mamao170_hurt": {

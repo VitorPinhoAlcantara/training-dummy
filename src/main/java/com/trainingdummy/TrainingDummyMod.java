@@ -11,6 +11,7 @@ import com.trainingdummy.network.DummyCuriosPagePayload;
 import com.trainingdummy.network.DummyDamagePayload;
 import com.trainingdummy.network.DummySetDisplayMetricPayload;
 import com.trainingdummy.network.DummySetMaxHealthPayload;
+import com.trainingdummy.network.OpenScoreboardScreenPayload;
 import com.trainingdummy.network.ServerPayloadHandler;
 import com.trainingdummy.registry.ModCreativeTabs;
 import com.trainingdummy.registry.ModDataComponents;
@@ -30,6 +31,7 @@ import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.slf4j.Logger;
 
@@ -88,14 +90,7 @@ public class TrainingDummyMod {
     }
 
     private void registerPayloads(RegisterPayloadHandlersEvent event) {
-
-
-
-
-
         PayloadRegistrar registrar = event.registrar("3").optional();
-        registrar.playToClient(DummyDamagePayload.TYPE, DummyDamagePayload.STREAM_CODEC,
-                com.trainingdummy.client.ClientPayloadHandler::handleDummyDamage);
         registrar.playToServer(DummyCuriosPagePayload.TYPE, DummyCuriosPagePayload.STREAM_CODEC,
                 ServerPayloadHandler::handleCuriosPage);
         registrar.playToServer(DummySetMaxHealthPayload.TYPE, DummySetMaxHealthPayload.STREAM_CODEC,
@@ -104,8 +99,17 @@ public class TrainingDummyMod {
                 ServerPayloadHandler::handleSetDisplayMetric);
         registrar.playToServer(DummyClearEffectsPayload.TYPE, DummyClearEffectsPayload.STREAM_CODEC,
                 ServerPayloadHandler::handleClearEffects);
-        registrar.playToClient(com.trainingdummy.network.OpenScoreboardScreenPayload.TYPE,
-                com.trainingdummy.network.OpenScoreboardScreenPayload.STREAM_CODEC,
-                com.trainingdummy.client.ClientPayloadHandler::handleOpenScoreboardScreen);
+        registrar.playToClient(DummyDamagePayload.TYPE, DummyDamagePayload.STREAM_CODEC,
+                TrainingDummyMod::handleDummyDamage);
+        registrar.playToClient(OpenScoreboardScreenPayload.TYPE, OpenScoreboardScreenPayload.STREAM_CODEC,
+                TrainingDummyMod::handleOpenScoreboardScreen);
+    }
+
+    private static void handleDummyDamage(DummyDamagePayload payload, IPayloadContext context) {
+        com.trainingdummy.client.ClientPayloadHandler.handleDummyDamage(payload, context);
+    }
+
+    private static void handleOpenScoreboardScreen(OpenScoreboardScreenPayload payload, IPayloadContext context) {
+        com.trainingdummy.client.ClientPayloadHandler.handleOpenScoreboardScreen(payload, context);
     }
 }
