@@ -55,7 +55,7 @@
   "trainingdummy.configuration.modpackDisplayName": "Modpack display name",
   "trainingdummy.configuration.modpackDisplayName.tooltip": "Friendly name shown in the global leaderboard's title (e.g. \"ATM 11\"). Purely cosmetic - leave blank to just show a generic title.",
   "trainingdummy.configuration.leaderboardRefreshSeconds": "Leaderboard refresh interval (seconds)",
-  "trainingdummy.configuration.leaderboardRefreshSeconds.tooltip": "Minimum time between this server re-checking the worker for leaderboard updates.",
+  "trainingdummy.configuration.leaderboardRefreshSeconds.tooltip": "Minimum time between this server re-fetching the global leaderboard. Only fetched on demand, when a player opens the scoreboard dummy screen.",
   "trainingdummy.configuration.recordDebounceSeconds": "Record debounce (seconds)",
   "trainingdummy.configuration.recordDebounceSeconds.tooltip": "How long to wait after a qualifying hit before submitting it, in case the same player beats it again shortly after.",
   "trainingdummy.configuration.workerBaseUrl": "Worker base URL",
@@ -63,7 +63,7 @@
   "trainingdummy.configuration.workerApiKey": "Worker API key",
   "trainingdummy.configuration.workerApiKey.tooltip": "Sent as the X-Api-Key header on every submission, if set. Must match modpackId's own key on the worker. Leave blank to use the mod's built-in default modpack's key.",
   "trainingdummy.configuration.globalLeaderboardEnabled": "Enable global leaderboard",
-  "trainingdummy.configuration.globalLeaderboardEnabled.tooltip": "Turns the cross-server global leaderboard on or off entirely. Off disables fetching, showing and submitting to it; the local leaderboard keeps working either way. On by default.",
+  "trainingdummy.configuration.globalLeaderboardEnabled.tooltip": "Turns the cross-server global leaderboard on or off entirely. When on, the only data sent is the player nickname and the damage of a record-breaking hit. Off disables fetching, showing and submitting to it (no network requests at all); the local leaderboard keeps working either way. Off by default.",
   "trainingdummy.configuration.weaponBlacklist": "Weapon blacklist (extra)",
   "trainingdummy.configuration.weaponBlacklist.tooltip": "Extra item IDs banned from scoring, ADDED ON TOP of the mod's built-in blacklist (can't remove or override it). Exact IDs (\"minecraft:netherite_sword\"), a whole mod with \"modid:*\" (\"avaritia:*\"), or - with no \":\" - a substring match against every item ID (\"sword\").",
 
@@ -78,6 +78,9 @@
   "gui.trainingdummy.title.local": "Local Leaderboard (this server)",
   "gui.trainingdummy.mode.global": "Mode: Global",
   "gui.trainingdummy.mode.local": "Mode: Local",
+  "gui.trainingdummy.global_disabled.line1": "The global leaderboard is disabled.",
+  "gui.trainingdummy.global_disabled.line2": "Set globalLeaderboardEnabled to true in the",
+  "gui.trainingdummy.global_disabled.line3": "server config to turn it on.",
   "gui.trainingdummy.empty": "No records yet - be the first!",
   "gui.trainingdummy.entry": "%s. %s - %s damage",
 
@@ -86,6 +89,7 @@
   "trainingdummy.record.confirmed": "Record confirmed! Sending to the server... You're #%s on the leaderboard.",
   "trainingdummy.record.rejected": "The leaderboard updated in the meantime and your record didn't make the cut :(",
   "trainingdummy.record.communication_error": "Couldn't confirm your record - there was a problem communicating with the leaderboard server. Please try again later.",
+  "trainingdummy.record.communication_error.update": "If this keeps happening, check that the Training Dummy mod is up to date on the server and on your client.",
 
   "trainingdummy.display.total": "%s damage",
   "trainingdummy.display.dps": "%s DPS",

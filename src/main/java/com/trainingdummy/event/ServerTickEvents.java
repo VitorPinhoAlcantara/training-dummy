@@ -25,25 +25,28 @@ public final class ServerTickEvents {
             return;
         }
 
-        LeaderboardCache.refreshGlobalIfStale(overworld);
-
         long now = overworld.getGameTime();
         PendingCandidateTracker.tick(now, snapshot -> confirmCandidate(server, snapshot));
     }
 
     private static void confirmCandidate(MinecraftServer server, PlayerCombatSnapshot snapshot) {
-        int rank = LeaderboardCache.confirmGlobalCandidate(snapshot, server.registryAccess());
-        ServerPlayer player = server.getPlayerList().getPlayer(snapshot.playerUuid());
-        if (player == null) {
-            return;
-        }
-        if (rank > 0) {
-            player.sendSystemMessage(Component.translatable("trainingdummy.record.confirmed", rank));
-        } else if (rank == LeaderboardCache.COMMUNICATION_ERROR) {
-            player.sendSystemMessage(Component.translatable("trainingdummy.record.communication_error"));
-        } else {
-            player.sendSystemMessage(Component.translatable("trainingdummy.record.rejected"));
-        }
+        LeaderboardCache.confirmGlobalCandidate(server, snapshot, rank -> {
+            if (rank == LeaderboardCache.SKIPPED) {
+                return;
+            }
+            ServerPlayer player = server.getPlayerList().getPlayer(snapshot.playerUuid());
+            if (player == null) {
+                return;
+            }
+            if (rank > 0) {
+                player.sendSystemMessage(Component.translatable("trainingdummy.record.confirmed", rank));
+            } else if (rank == LeaderboardCache.COMMUNICATION_ERROR) {
+                player.sendSystemMessage(Component.translatable("trainingdummy.record.communication_error"));
+                player.sendSystemMessage(Component.translatable("trainingdummy.record.communication_error.update"));
+            } else {
+                player.sendSystemMessage(Component.translatable("trainingdummy.record.rejected"));
+            }
+        });
     }
 
     private ServerTickEvents() {

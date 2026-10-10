@@ -15,7 +15,7 @@ public final class CommonConfig {
     private static final String DEFAULT_WORKER_BASE_URL = WorkerSecrets.DEFAULT_WORKER_BASE_URL;
 
     private static final List<String> HARDCODED_WEAPON_BLACKLIST = List.of(
-            "mahoutsukai:morgan", "avaritia:*", "modern_industrialization:*", "infinity", "quantum");
+            "mahoutsukai:morgan", "occultism_extra_spirits:forbidden_butcher_knife", "avaritia:*", "modern_industrialization:*", "infinity", "quantum");
 
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
 
@@ -36,9 +36,10 @@ public final class CommonConfig {
             .define("modpackDisplayName", "");
 
     public static final ModConfigSpec.IntValue LEADERBOARD_REFRESH_SECONDS = BUILDER
-            .comment("Minimum time between re-fetching the leaderboard from the worker. Clients ask this " +
-                    "server for the leaderboard on demand (opening the scoreboard dummy's screen); this " +
-                    "only limits how often the server itself re-checks the worker for updates.")
+            .comment("Minimum time between re-fetching the global leaderboard from the worker. The server " +
+                    "only fetches it on demand, when a player opens the scoreboard dummy's screen and the " +
+                    "cached copy is older than this - with nobody opening the screen, no fetch ever happens. " +
+                    "Only used while globalLeaderboardEnabled is on.")
             .defineInRange("leaderboardRefreshSeconds", 600, 10, 86_400);
 
     public static final ModConfigSpec.IntValue RECORD_DEBOUNCE_SECONDS = BUILDER
@@ -58,15 +59,20 @@ public final class CommonConfig {
             .define("workerApiKey", "");
 
     public static final ModConfigSpec.BooleanValue GLOBAL_LEADERBOARD_ENABLED = BUILDER
-            .comment("Whether the scoreboard dummy uses the cross-server global leaderboard at all - " +
-                    "fetching it, showing it in the screen, and submitting records to it. Turning this off " +
-                    "disables every global code path regardless of modpackId; the local (this server only) " +
-                    "leaderboard is unaffected either way. On by default.")
-            .define("globalLeaderboardEnabled", true);
+            .comment("OFF by default (opt-in). Whether the scoreboard dummy uses the cross-server global " +
+                    "leaderboard - fetching it, showing it in the screen, and submitting records to it. " +
+                    "When on, the ONLY data this server sends to the leaderboard worker is the player's " +
+                    "Minecraft nickname and the damage of a record-breaking hit (plus modpackId), " +
+                    "sent to workerBaseUrl at most once per qualifying record after recordDebounceSeconds. No UUID, " +
+                    "inventory, equipment, effects or any other player data is sent. The worker address is " +
+                    "workerBaseUrl and the worker's source is open (the 'worker' folder of the mod's repository). " +
+                    "When off, no network request is ever made; the local (this server only) leaderboard " +
+                    "is unaffected either way.")
+            .define("globalLeaderboardEnabled", false);
 
     public static final ModConfigSpec.ConfigValue<List<? extends String>> WEAPON_BLACKLIST = BUILDER
             .comment("Extra item IDs that can never score a leaderboard hit, ADDED ON TOP of the mod's own " +
-                    "built-in blacklist (mahoutsukai:morgan, every Avaritia and Modern Industrialization item, " +
+                    "built-in blacklist (mahoutsukai:morgan, occultism_extra_spirits:forbidden_butcher_knife, every Avaritia and Modern Industrialization item, " +
                     "and anything with \"infinity\" or \"quantum\" in its ID). A hit dealt with a blacklisted item " +
                     "in the player's main hand is ignored entirely, both locally and globally, as if it never " +
                     "happened. Three formats: an exact item ID (\"minecraft:netherite_sword\"), a whole mod's " +

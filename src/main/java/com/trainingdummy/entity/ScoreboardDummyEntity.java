@@ -5,6 +5,7 @@ import com.trainingdummy.network.OpenScoreboardScreenPayload;
 import com.trainingdummy.rank.LeaderboardCache;
 import com.trainingdummy.registry.ModItems;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -29,12 +30,26 @@ public class ScoreboardDummyEntity extends DummyEntity {
         if (player.level().isClientSide() || !(player instanceof ServerPlayer serverPlayer)) {
             return;
         }
-        PacketDistributor.sendToPlayer(serverPlayer, new OpenScoreboardScreenPayload(
+        this.sendScreen(serverPlayer, false);
+
+        MinecraftServer server = serverPlayer.level().getServer();
+        if (server != null) {
+            LeaderboardCache.refreshGlobalIfStale(server, entries -> {
+                if (server.getPlayerList().getPlayer(serverPlayer.getUUID()) != null) {
+                    this.sendScreen(serverPlayer, true);
+                }
+            });
+        }
+    }
+
+    private void sendScreen(ServerPlayer player, boolean refresh) {
+        PacketDistributor.sendToPlayer(player, new OpenScoreboardScreenPayload(
                 this.getId(),
                 LeaderboardCache.localEntries(),
                 LeaderboardCache.globalEntries(),
-                LeaderboardCache.globalAvailable(),
-                CommonConfig.MODPACK_DISPLAY_NAME.get()));
+                LeaderboardCache.globalState(),
+                CommonConfig.MODPACK_DISPLAY_NAME.get(),
+                refresh));
     }
 
     @Override

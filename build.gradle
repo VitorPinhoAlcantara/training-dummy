@@ -40,6 +40,17 @@ repositories {
             includeGroup "maven.modrinth"
         }
     }
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "CurseMaven"
+                url = "https://www.cursemaven.com"
+            }
+        }
+        filter {
+            includeGroup "curse.maven"
+        }
+    }
 }
 
 base {
@@ -144,6 +155,9 @@ dependencies {
     localRuntime "maven.modrinth:jei:${jei_version}"
     localRuntime "maven.modrinth:jade:${jade_version}"
     localRuntime "maven.modrinth:mahou-tsukai:${mahoutsukai_version}"
+    localRuntime "curse.maven:occultism-361026:${occultism_version}"
+    localRuntime "curse.maven:modonomicon-538392:${modonomicon_version}"
+    localRuntime "curse.maven:geckolib-388172:${geckolib_version}"
     compileOnly "maven.modrinth:guideme:${guideme_version}"
     localRuntime "maven.modrinth:guideme:${guideme_version}"
     localRuntime "maven.modrinth:apotheosis:${apotheosis_version}"

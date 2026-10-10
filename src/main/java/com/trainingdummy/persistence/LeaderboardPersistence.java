@@ -53,7 +53,7 @@ public final class LeaderboardPersistence {
         if (filePath == null) {
             return;
         }
-        Map<String, java.util.List<com.trainingdummy.snapshot.PlayerCombatSnapshot>> globalState =
+        Map<String, java.util.List<com.trainingdummy.rank.LeaderboardEntry>> globalState =
                 LeaderboardCache.service() instanceof LocalStubLeaderboardService stub ? stub.exportState() : Map.of();
         PersistedLeaderboardState state = new PersistedLeaderboardState(LeaderboardCache.localEntries(), globalState);
 

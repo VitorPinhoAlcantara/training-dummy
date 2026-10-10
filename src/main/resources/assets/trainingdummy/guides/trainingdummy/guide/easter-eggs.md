@@ -19,6 +19,7 @@ These dummies play a custom hit sound instead of the default one.
 - Danrique
 - MitinhoPlayer
 - JazaraGamer
+- Jazarinha
 - Nofaxu
 - mamao170
 - MeioElfo

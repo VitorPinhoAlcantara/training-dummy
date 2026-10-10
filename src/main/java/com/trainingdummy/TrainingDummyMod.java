@@ -78,7 +78,7 @@ public class TrainingDummyMod {
 
     private void registerPayloads(RegisterPayloadHandlersEvent event) {
 
-        PayloadRegistrar registrar = event.registrar("3").optional();
+        PayloadRegistrar registrar = event.registrar("4").optional();
         registrar.playToClient(DummyDamagePayload.TYPE, DummyDamagePayload.STREAM_CODEC,
                 (payload, context) -> {
                     if (FMLEnvironment.getDist().isClient()) {

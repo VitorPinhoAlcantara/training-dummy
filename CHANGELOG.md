@@ -2,6 +2,30 @@
 
 All notable changes to this mod are documented here.
 
+## [1.9] - 2026-10-09
+
+### Changed
+- The global (cross-server) leaderboard is now **off by default** (`globalLeaderboardEnabled`). With it off the mod makes no network requests at all. The scoreboard dummy's Global tab stays visible and tells players to enable it in the server config.
+- When enabled, the only data sent to the leaderboard worker is the player's nickname and the damage of a record-breaking hit (no UUID, inventory, armor, held items, Curios, effects or attributes). The server-side attribute-tampering check and the weapon blacklist still apply; the worker no longer validates attributes.
+- The global leaderboard is now fetched on demand (when a player opens the scoreboard dummy's screen and the cached copy is older than `leaderboardRefreshSeconds`) instead of on a timer, so nothing is requested while nobody uses it.
+- Submitting a record now takes a single request (was three).
+- The mod's network protocol version was bumped: client and server must both run 1.9.
+
+### Fixed
+- Leaderboard network requests no longer run on the server thread. A slow or offline worker can no longer stall the server tick; repeated failures log at most one warning every few minutes.
+
+- When the global leaderboard has not loaded yet, a hit no longer claims a provisional rank; it just triggers loading it and the record is confirmed afterwards.
+- Connection timeout to the leaderboard worker raised from 5 to 10 seconds.
+- On a leaderboard communication error the player now also gets a second message suggesting to check that the mod is up to date on the server and client.
+
+- Every request to the leaderboard worker is now logged with its full URL, outcome and duration (and the exact JSON body for submissions) in the server log.
+
+### New
+- New hidden nickname easter egg: Jazarinha (same hurt and placement sounds as JazaraGamer).
+- New hidden nickname easter egg: EqisEdu (dies in one hit to the Occultism Iesnium Butcher Knife, with its own death message).
+- The Forbidden Butcher Knife (Occultism Extra Spirits) can no longer score leaderboard hits (always blocked, like the Morgan Sword).
+- README now has a Privacy section describing exactly what is sent, when, and where.
+
 ## [1.8] - 2026-10-02
 
 ### Fixed

@@ -203,20 +203,32 @@ public class DummyEntity extends LivingEntity {
     }
 
     private static final String MITINHO_NICKNAME = "MitinhoPlayer";
+    private static final String EQISEDU_NICKNAME = "EqisEdu";
 
     public boolean hasMitinhoNickname() {
         return MITINHO_NICKNAME.equalsIgnoreCase(this.getSkinName());
     }
 
-    private boolean isMorganKill(DamageSource source) {
-        if (!this.hasMitinhoNickname()) {
-            return false;
-        }
+    public boolean hasEqisEduNickname() {
+        return EQISEDU_NICKNAME.equalsIgnoreCase(this.getSkinName());
+    }
+
+    private boolean isNicknameWeaponKill(DamageSource source) {
         if (!(source.getDirectEntity() instanceof Player player)) {
             return false;
         }
         Identifier weaponId = BuiltInRegistries.ITEM.getKey(player.getMainHandItem().getItem());
-        return weaponId != null && weaponId.getNamespace().equals("mahoutsukai") && weaponId.getPath().equals("morgan");
+        if (weaponId == null) {
+            return false;
+        }
+        if (this.hasMitinhoNickname()) {
+            return weaponId.getNamespace().equals("mahoutsukai") && weaponId.getPath().equals("morgan");
+        }
+        if (this.hasEqisEduNickname()) {
+            return weaponId.getNamespace().equals("occultism")
+                    && weaponId.getPath().equals("iesnium_butcher_knife");
+        }
+        return false;
     }
 
     @Override
@@ -228,7 +240,7 @@ public class DummyEntity extends LivingEntity {
             this.discard();
             return true;
         }
-        if (this.isMorganKill(source)) {
+        if (this.isNicknameWeaponKill(source)) {
             level.playSound(null, this.getX(), this.getY(), this.getZ(), this.getHurtSound(source),
                     this.getSoundSource(), 1.0F, 1.0F);
             this.setHealth(0.0F);
@@ -317,6 +329,12 @@ public class DummyEntity extends LivingEntity {
                                 .withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC),
                         false);
             }
+            if (this.hasEqisEduNickname() && serverLevel.getServer() != null) {
+                serverLevel.getServer().getPlayerList().broadcastSystemMessage(
+                        Component.literal("EqisEdu returned to the otherworld")
+                                .withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC),
+                        false);
+            }
         }
     }
 
@@ -358,6 +376,7 @@ public class DummyEntity extends LivingEntity {
             java.util.Map.entry("BrunimNeets", ModSounds.BRUNIMNEETS_HURT),
             java.util.Map.entry("mamao170", ModSounds.MAMAO170_HURT),
             java.util.Map.entry("JazaraGamer", ModSounds.JAZARAGAMER_HURT),
+            java.util.Map.entry("Jazarinha", ModSounds.JAZARAGAMER_HURT),
             java.util.Map.entry("MeioElfo", ModSounds.MEIOELFO_HURT),
             java.util.Map.entry("ForeverPlayerG", ModSounds.FOREVERPLAYERG_HURT),
             java.util.Map.entry("Topiinho", ModSounds.TOPIINHO_HURT),
@@ -372,7 +391,8 @@ public class DummyEntity extends LivingEntity {
     }
 
     private static final java.util.Map<String, java.util.function.Supplier<SoundEvent>> NAMED_PLACE_SOUNDS = java.util.Map.of(
-            "JazaraGamer", ModSounds.JAZARAGAMER_PLACE
+            "JazaraGamer", ModSounds.JAZARAGAMER_PLACE,
+            "Jazarinha", ModSounds.JAZARAGAMER_PLACE
     );
 
     public Optional<SoundEvent> getPlacementSound() {

@@ -17,7 +17,11 @@ public final class ServerLifecycleEvents {
     static void onServerStarting(ServerStartingEvent event) {
         String workerBaseUrl = CommonConfig.effectiveWorkerBaseUrl();
         LeaderboardCache.setService(new HttpLeaderboardService(workerBaseUrl, CommonConfig.effectiveWorkerApiKey()));
-        TrainingDummyMod.LOGGER.info("Dummy Scoreboard: reporting to worker at {}", workerBaseUrl);
+        if (CommonConfig.GLOBAL_LEADERBOARD_ENABLED.get()) {
+            TrainingDummyMod.LOGGER.info("Dummy Scoreboard: global leaderboard enabled, reporting nickname and damage to worker at {}", workerBaseUrl);
+        } else {
+            TrainingDummyMod.LOGGER.info("Dummy Scoreboard: global leaderboard is disabled (globalLeaderboardEnabled=false), no data is sent anywhere");
+        }
 
         LeaderboardPersistence.bind(event.getServer());
     }

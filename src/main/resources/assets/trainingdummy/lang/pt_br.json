@@ -55,7 +55,7 @@
   "trainingdummy.configuration.modpackDisplayName": "Nome de exibição do modpack",
   "trainingdummy.configuration.modpackDisplayName.tooltip": "Nome amigável mostrado no título do ranking global (ex: \"ATM 11\"). Puramente visual - deixe em branco pra mostrar só o título genérico.",
   "trainingdummy.configuration.leaderboardRefreshSeconds": "Intervalo de atualização do ranking (segundos)",
-  "trainingdummy.configuration.leaderboardRefreshSeconds.tooltip": "Tempo mínimo entre o servidor checar o worker de novo por atualizações do ranking.",
+  "trainingdummy.configuration.leaderboardRefreshSeconds.tooltip": "Tempo mínimo entre o servidor buscar o ranking global de novo. Só busca sob demanda, quando um jogador abre a tela do dummy de placar.",
   "trainingdummy.configuration.recordDebounceSeconds": "Espera do recorde (segundos)",
   "trainingdummy.configuration.recordDebounceSeconds.tooltip": "Quanto tempo esperar depois de um hit qualificado antes de enviá-lo, caso o mesmo jogador bata mais forte ainda logo em seguida.",
   "trainingdummy.configuration.workerBaseUrl": "URL base do worker",
@@ -63,7 +63,7 @@
   "trainingdummy.configuration.workerApiKey": "Chave de API do worker",
   "trainingdummy.configuration.workerApiKey.tooltip": "Enviada como header X-Api-Key em toda submissão, se definida. Precisa bater com a chave própria do modpackId no worker. Deixe em branco pra usar a chave do modpack padrão embutido no mod.",
   "trainingdummy.configuration.globalLeaderboardEnabled": "Ativar ranking global",
-  "trainingdummy.configuration.globalLeaderboardEnabled.tooltip": "Liga ou desliga o ranking global entre servidores por completo. Desligado desativa buscar, mostrar e enviar recordes pra ele; o ranking local continua funcionando de qualquer forma. Vem ligado por padrão.",
+  "trainingdummy.configuration.globalLeaderboardEnabled.tooltip": "Liga ou desliga o ranking global entre servidores por completo. Quando ligado, os únicos dados enviados são o nick do jogador e o dano de um hit que bateu recorde. Desligado desativa buscar, mostrar e enviar recordes pra ele (nenhuma requisição de rede); o ranking local continua funcionando de qualquer forma. Vem desligado por padrão.",
   "trainingdummy.configuration.weaponBlacklist": "Lista negra de armas (extra)",
   "trainingdummy.configuration.weaponBlacklist.tooltip": "IDs de item extras banidos, ADICIONADOS por cima da lista negra fixa do mod (não dá pra remover ou sobrescrever ela). IDs exatos (\"minecraft:netherite_sword\"), um mod inteiro com \"modid:*\" (\"avaritia:*\"), ou - sem \":\" - um trecho do ID (\"sword\").",
 
@@ -78,6 +78,9 @@
   "gui.trainingdummy.title.local": "Ranking Local (deste servidor)",
   "gui.trainingdummy.mode.global": "Modo: Global",
   "gui.trainingdummy.mode.local": "Modo: Local",
+  "gui.trainingdummy.global_disabled.line1": "O ranking global está desativado.",
+  "gui.trainingdummy.global_disabled.line2": "Defina globalLeaderboardEnabled como true na",
+  "gui.trainingdummy.global_disabled.line3": "config do servidor para ativá-lo.",
   "gui.trainingdummy.empty": "Nenhum recorde ainda - seja o primeiro!",
   "gui.trainingdummy.entry": "%s. %s - %s de dano",
 
@@ -86,6 +89,7 @@
   "trainingdummy.record.confirmed": "Recorde confirmado! Enviando para o servidor... Você está em #%s no ranking.",
   "trainingdummy.record.rejected": "O ranking foi atualizado nesse meio tempo e seu recorde acabou não entrando :(",
   "trainingdummy.record.communication_error": "Não foi possível confirmar seu recorde - houve um problema de comunicação com o servidor do ranking. Tente novamente mais tarde.",
+  "trainingdummy.record.communication_error.update": "Se isso continuar acontecendo, verifique se o mod Training Dummy está atualizado no servidor e no seu cliente.",
 
   "trainingdummy.display.total": "%s de dano",
   "trainingdummy.display.dps": "%s DPS",

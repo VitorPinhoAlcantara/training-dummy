@@ -37,7 +37,9 @@ total, and reports it to a leaderboard.
 Every server keeps its own **local** leaderboard, top 10 hits only.
 
 There's also a **global** leaderboard shared across every
-server. The global leaderboard resets every week; the local one never does.
+server. It is **off by default**: the server owner has to turn on `globalLeaderboardEnabled` in the
+server config, and until then the Global tab just tells you so. When enabled, only your nickname and
+the damage of a record-breaking hit are sent. The global leaderboard resets every week; the local one never does.
 
 The #1 player on whichever board is showing gets their skin rendered next to their name; click and drag
 it to spin it around.
@@ -52,6 +54,7 @@ something like that doesn't show up on the board, that's why.
 The following are always blocked, on every server:
 
 - Morgan Sword (Mahou Tsukai)
+- Forbidden Butcher Knife (Occultism Extra Spirits)
 - Any item from Avaritia
 - Any item from Modern Industrialization
 - Any item with "Infinity" in its name

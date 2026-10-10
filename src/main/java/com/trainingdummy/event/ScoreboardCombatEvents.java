@@ -50,8 +50,12 @@ public final class ScoreboardCombatEvents {
         }
 
         if (LeaderboardCache.globalAvailable() && LeaderboardCache.qualifiesGlobal(playerName, amount)) {
-            int globalRank = LeaderboardCache.applyGlobalOptimisticUpdate(playerName, attacker.getUUID(), amount);
-            attacker.sendSystemMessage(Component.translatable("trainingdummy.record.achieved", globalRank));
+            if (LeaderboardCache.globalLoaded()) {
+                int globalRank = LeaderboardCache.applyGlobalOptimisticUpdate(playerName, attacker.getUUID(), amount);
+                attacker.sendSystemMessage(Component.translatable("trainingdummy.record.achieved", globalRank));
+            } else if (attacker.level().getServer() != null) {
+                LeaderboardCache.refreshGlobalIfStale(attacker.level().getServer(), null);
+            }
 
             PlayerCombatSnapshot snapshot = PlayerCombatSnapshot.capture(attacker, amount);
             long debounceTicks = CommonConfig.RECORD_DEBOUNCE_SECONDS.get() * 20L;
