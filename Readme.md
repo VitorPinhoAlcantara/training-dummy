@@ -30,12 +30,8 @@ The scoreboard dummy's **global (cross-server) leaderboard is off by default**. 
 
 If a server owner turns it on (`globalLeaderboardEnabled = true` in the common config), this is everything that is sent, and when:
 
-- **What:** the player's Minecraft **nickname** and the **damage** of a record-breaking hit, plus the leaderboard's `modpackId`. Nothing else: no UUID, no IP, no inventory, armor, held items, Curios, effects or attributes.
+- **What:** the player's Minecraft **nickname** and the **damage** of a record-breaking hit, plus the leaderboard's `modpackId`.
 - **When:** only when a hit qualifies for the top 10, after `recordDebounceSeconds` (default 20s) without an even bigger hit from the same player. One request per record.
 - **Where:** the worker at `workerBaseUrl` (the mod's built-in worker if left blank). Point it at your own endpoint to keep everything in-house.
 - **Reading:** the server fetches the top 10 only when a player opens the scoreboard dummy's screen and its cached copy is older than `leaderboardRefreshSeconds` (default 600s). Nobody opening the screen means no requests.
 - **Performance:** every request is asynchronous, a slow or offline worker never blocks the server tick; failures just show up as one (rate-limited) warning in the log.
-
-The worker's source code is open: the `worker/` folder of the project (Cloudflare Workers + D1).
-
-**Anti-cheat limitation:** because the mod no longer sends combat data, the worker can no longer verify a submission beyond basic validation. The server-side checks that remain are the mod's own attribute-tampering check and the weapon blacklist, and the shared API key ships inside the mod, so it was never a real barrier. Treat the global board as trust-based.
