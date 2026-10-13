@@ -1,6 +1,7 @@
 package com.trainingdummy.client;
 
 import com.mojang.authlib.GameProfile;
+import com.trainingdummy.rank.GlobalLeaderboardState;
 import com.trainingdummy.rank.LeaderboardEntry;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
@@ -19,7 +20,6 @@ import org.joml.Vector3f;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 
 public class ScoreboardScreen extends Screen {
@@ -38,35 +38,35 @@ public class ScoreboardScreen extends Screen {
 
     private static boolean lastViewedGlobal = true;
 
-    private final List<LeaderboardEntry> localEntries;
-    private final List<LeaderboardEntry> globalEntries;
-    private final boolean globalAvailable;
+    private List<LeaderboardEntry> localEntries;
+    private List<LeaderboardEntry> globalEntries;
+    private final GlobalLeaderboardState globalState;
     private final String modpackDisplayName;
     private final List<AbstractWidget> contentWidgets = new ArrayList<>();
 
     private boolean showingGlobal;
     private Button toggleButton;
     private LivingEntity topPreviewEntity;
-    private UUID topPreviewUuid;
+    private String topPreviewKey;
     private String topPreviewName = "";
     private float previewYaw = 180.0F;
     private boolean rotatingPreview;
 
     public ScoreboardScreen(List<LeaderboardEntry> localEntries, List<LeaderboardEntry> globalEntries,
-                             boolean globalAvailable, String modpackDisplayName) {
+                             GlobalLeaderboardState globalState, String modpackDisplayName) {
         super(Component.translatable("gui.trainingdummy.title"));
         this.localEntries = localEntries;
         this.globalEntries = globalEntries;
-        this.globalAvailable = globalAvailable;
+        this.globalState = globalState;
         this.modpackDisplayName = modpackDisplayName;
-        this.showingGlobal = globalAvailable && lastViewedGlobal;
+        this.showingGlobal = this.hasGlobalTab() && lastViewedGlobal;
     }
 
     @Override
     protected void init() {
         super.init();
 
-        if (this.globalAvailable) {
+        if (this.hasGlobalTab()) {
             this.toggleButton = this.addRenderableWidget(Button.builder(this.modeLabel(), b -> this.toggleMode())
                     .bounds(this.width / 2 - 50, this.height - 55, 100, 20).build());
         }
@@ -74,6 +74,16 @@ public class ScoreboardScreen extends Screen {
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, b -> this.onClose())
                 .bounds(this.width / 2 - 50, this.height - 30, 100, 20).build());
 
+        this.rebuildContent();
+    }
+
+    private boolean hasGlobalTab() {
+        return this.globalState != GlobalLeaderboardState.NO_MODPACK_ID;
+    }
+
+    public void updateEntries(List<LeaderboardEntry> localEntries, List<LeaderboardEntry> globalEntries) {
+        this.localEntries = localEntries;
+        this.globalEntries = globalEntries;
         this.rebuildContent();
     }
 
@@ -98,10 +108,20 @@ public class ScoreboardScreen extends Screen {
         Component title = this.showingGlobal ? this.globalTitle() : Component.translatable("gui.trainingdummy.title.local");
         this.contentWidgets.add(this.addCenteredLine(title, 16));
 
-        if (entries.isEmpty()) {
+        if (this.showingGlobal && this.globalState == GlobalLeaderboardState.DISABLED_IN_CONFIG) {
+            this.contentWidgets.add(this.addCenteredLine(Component.translatable("gui.trainingdummy.global_disabled.line1")
+                    .withStyle(ChatFormatting.YELLOW), LIST_TOP));
+            this.contentWidgets.add(this.addCenteredLine(Component.translatable("gui.trainingdummy.global_disabled.line2"),
+                    LIST_TOP + ROW_HEIGHT));
+            this.contentWidgets.add(this.addCenteredLine(Component.translatable("gui.trainingdummy.global_disabled.line3"),
+                    LIST_TOP + ROW_HEIGHT * 2));
+            this.topPreviewEntity = null;
+            this.topPreviewKey = null;
+            this.topPreviewName = "";
+        } else if (entries.isEmpty()) {
             this.contentWidgets.add(this.addCenteredLine(Component.translatable("gui.trainingdummy.empty"), LIST_TOP));
             this.topPreviewEntity = null;
-            this.topPreviewUuid = null;
+            this.topPreviewKey = null;
             this.topPreviewName = "";
         } else {
             this.updateTopPreviewEntity(entries.get(0));
@@ -124,10 +144,11 @@ public class ScoreboardScreen extends Screen {
         if (this.minecraft == null || this.minecraft.level == null) {
             return;
         }
-        if (topEntry.playerUuid().equals(this.topPreviewUuid)) {
+        String key = topEntry.hasKnownUuid() ? topEntry.playerUuid().toString() : "name:" + topEntry.playerName();
+        if (key.equals(this.topPreviewKey)) {
             return;
         }
-        this.topPreviewUuid = topEntry.playerUuid();
+        this.topPreviewKey = key;
         this.topPreviewEntity = new RankPreviewPlayer(this.minecraft.level,
                 new GameProfile(topEntry.playerUuid(), topEntry.playerName()));
     }

@@ -9,12 +9,13 @@ import net.minecraft.network.codec.StreamCodec;
 
 import java.util.UUID;
 
-
 public record LeaderboardEntry(String playerName, UUID playerUuid, float damage) {
+
+    public static final UUID NIL_UUID = new UUID(0L, 0L);
 
     public static final Codec<LeaderboardEntry> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.STRING.fieldOf("player_name").forGetter(LeaderboardEntry::playerName),
-            UUIDUtil.STRING_CODEC.fieldOf("player_uuid").forGetter(LeaderboardEntry::playerUuid),
+            UUIDUtil.STRING_CODEC.optionalFieldOf("player_uuid", NIL_UUID).forGetter(LeaderboardEntry::playerUuid),
             Codec.FLOAT.fieldOf("damage").forGetter(LeaderboardEntry::damage)
     ).apply(instance, LeaderboardEntry::new));
 
@@ -24,4 +25,8 @@ public record LeaderboardEntry(String playerName, UUID playerUuid, float damage)
             ByteBufCodecs.FLOAT, LeaderboardEntry::damage,
             LeaderboardEntry::new
     );
+
+    public boolean hasKnownUuid() {
+        return !NIL_UUID.equals(this.playerUuid);
+    }
 }

@@ -90,7 +90,7 @@ public class TrainingDummyMod {
     }
 
     private void registerPayloads(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar registrar = event.registrar("3").optional();
+        PayloadRegistrar registrar = event.registrar("4").optional();
         registrar.playToServer(DummyCuriosPagePayload.TYPE, DummyCuriosPagePayload.STREAM_CODEC,
                 ServerPayloadHandler::handleCuriosPage);
         registrar.playToServer(DummySetMaxHealthPayload.TYPE, DummySetMaxHealthPayload.STREAM_CODEC,

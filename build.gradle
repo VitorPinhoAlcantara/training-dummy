@@ -40,6 +40,17 @@ repositories {
             includeGroup "maven.modrinth"
         }
     }
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "CurseMaven"
+                url = "https://www.cursemaven.com"
+            }
+        }
+        filter {
+            includeGroup "curse.maven"
+        }
+    }
 }
 
 base {
@@ -154,6 +165,9 @@ dependencies {
 
 
     localRuntime "maven.modrinth:mahou-tsukai:${mahoutsukai_version}"
+    localRuntime "curse.maven:occultism-361026:${occultism_version}"
+    localRuntime "curse.maven:modonomicon-538392:${modonomicon_version}"
+    localRuntime "curse.maven:smartbrainlib-661293:${smartbrainlib_version}"
 
 
 

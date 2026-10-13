@@ -1,6 +1,7 @@
 package com.trainingdummy.network;
 
 import com.trainingdummy.TrainingDummyMod;
+import com.trainingdummy.rank.GlobalLeaderboardState;
 import com.trainingdummy.rank.LeaderboardEntry;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -15,8 +16,9 @@ public record OpenScoreboardScreenPayload(
         int dummyEntityId,
         List<LeaderboardEntry> localEntries,
         List<LeaderboardEntry> globalEntries,
-        boolean globalAvailable,
-        String modpackDisplayName
+        GlobalLeaderboardState globalState,
+        String modpackDisplayName,
+        boolean refresh
 ) implements CustomPacketPayload {
 
     public static final Type<OpenScoreboardScreenPayload> TYPE =
@@ -26,8 +28,10 @@ public record OpenScoreboardScreenPayload(
             ByteBufCodecs.VAR_INT, OpenScoreboardScreenPayload::dummyEntityId,
             LeaderboardEntry.STREAM_CODEC.apply(ByteBufCodecs.list()), OpenScoreboardScreenPayload::localEntries,
             LeaderboardEntry.STREAM_CODEC.apply(ByteBufCodecs.list()), OpenScoreboardScreenPayload::globalEntries,
-            ByteBufCodecs.BOOL, OpenScoreboardScreenPayload::globalAvailable,
+            ByteBufCodecs.idMapper(id -> GlobalLeaderboardState.values()[id], GlobalLeaderboardState::ordinal),
+            OpenScoreboardScreenPayload::globalState,
             ByteBufCodecs.STRING_UTF8, OpenScoreboardScreenPayload::modpackDisplayName,
+            ByteBufCodecs.BOOL, OpenScoreboardScreenPayload::refresh,
             OpenScoreboardScreenPayload::new
     );
 

@@ -5,13 +5,8 @@ import com.trainingdummy.snapshot.PlayerCombatSnapshot;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.mojang.serialization.DataResult;
-import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.JsonOps;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.resources.RegistryOps;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -21,15 +16,21 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
-
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class HttpLeaderboardService implements LeaderboardService {
 
-    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(5);
+    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
+    private static final long FAILURE_LOG_INTERVAL_MILLIS = 5 * 60_000L;
 
     private final String baseUrl;
     private final String apiKey;
     private final HttpClient client;
+
+    private final AtomicLong lastFailureLogMillis = new AtomicLong();
+    private final AtomicInteger suppressedFailures = new AtomicInteger();
 
     public HttpLeaderboardService(String baseUrl, String apiKey) {
         this.baseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
@@ -40,41 +41,43 @@ public class HttpLeaderboardService implements LeaderboardService {
     }
 
     @Override
-    public Optional<List<LeaderboardEntry>> fetchTop10(String modpackId) {
+    public CompletableFuture<Optional<List<LeaderboardEntry>>> fetchTop10(String modpackId) {
+        URI uri = URI.create(this.baseUrl + "/leaderboard/" + URLEncoder.encode(modpackId, StandardCharsets.UTF_8));
+        String label = "GET " + uri;
+        long startNanos = this.logRequest(label);
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(this.baseUrl + "/leaderboard/" + URLEncoder.encode(modpackId, StandardCharsets.UTF_8)))
+                .uri(uri)
                 .timeout(REQUEST_TIMEOUT)
                 .GET()
                 .build();
 
-        try {
-            HttpResponse<String> response = this.client.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() != 200) {
-                TrainingDummyMod.LOGGER.error("Leaderboard fetch failed: HTTP {} - {}", response.statusCode(), response.body());
-                return Optional.empty();
-            }
-            JsonElement json = JsonParser.parseString(response.body());
-            return LeaderboardEntry.CODEC.listOf().parse(JsonOps.INSTANCE, json)
-                    .resultOrPartial(error -> TrainingDummyMod.LOGGER.error("Failed to decode leaderboard response: {}", error));
-        } catch (IOException e) {
-            TrainingDummyMod.LOGGER.error("Leaderboard fetch failed", e);
-            return Optional.empty();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return Optional.empty();
-        }
+        return this.client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .handle((response, error) -> {
+                    if (error != null) {
+                        this.logResult(label, startNanos, describe(error));
+                        this.logFailure("Leaderboard fetch failed: " + describe(error));
+                        return Optional.<List<LeaderboardEntry>>empty();
+                    }
+                    this.logResult(label, startNanos, "HTTP " + response.statusCode());
+                    if (response.statusCode() != 200) {
+                        this.logFailure("Leaderboard fetch failed: HTTP " + response.statusCode());
+                        return Optional.<List<LeaderboardEntry>>empty();
+                    }
+                    try {
+                        return this.decodeEntries(JsonParser.parseString(response.body()));
+                    } catch (RuntimeException e) {
+                        this.logFailure("Leaderboard fetch failed: " + describe(e));
+                        return Optional.<List<LeaderboardEntry>>empty();
+                    }
+                });
     }
 
     @Override
-    public boolean submitCandidate(String modpackId, PlayerCombatSnapshot snapshot, HolderLookup.Provider registries) {
-        DynamicOps<JsonElement> ops = RegistryOps.create(JsonOps.INSTANCE, registries);
-        DataResult<JsonElement> encoded = PlayerCombatSnapshot.CODEC.encodeStart(ops, snapshot);
-        return encoded.resultOrPartial(error -> TrainingDummyMod.LOGGER.error("Failed to encode snapshot: {}", error))
-                .map(snapshotJson -> this.postSubmit(modpackId, snapshotJson))
-                .orElse(false);
-    }
+    public CompletableFuture<SubmitResult> submitCandidate(String modpackId, PlayerCombatSnapshot snapshot) {
+        JsonObject snapshotJson = new JsonObject();
+        snapshotJson.addProperty("player_name", snapshot.playerName());
+        snapshotJson.addProperty("damage", snapshot.damage());
 
-    private boolean postSubmit(String modpackId, JsonElement snapshotJson) {
         JsonObject body = new JsonObject();
         body.addProperty("modpack_id", modpackId);
         body.add("snapshot", snapshotJson);
@@ -88,19 +91,78 @@ public class HttpLeaderboardService implements LeaderboardService {
             requestBuilder.header("X-Api-Key", this.apiKey);
         }
 
-        try {
-            HttpResponse<String> response = this.client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() != 200) {
-                TrainingDummyMod.LOGGER.error("Leaderboard submit failed: HTTP {} - {}", response.statusCode(), response.body());
-                return false;
+        String label = "POST " + this.baseUrl + "/submit";
+        long startNanos = this.logRequest(label + " body=" + body);
+        return this.client.sendAsync(requestBuilder.build(), HttpResponse.BodyHandlers.ofString())
+                .handle((response, error) -> {
+                    if (error != null) {
+                        this.logResult(label, startNanos, describe(error));
+                        this.logFailure("Leaderboard submit failed: " + describe(error));
+                        return SubmitResult.UNREACHABLE;
+                    }
+                    this.logResult(label, startNanos, "HTTP " + response.statusCode());
+                    if (response.statusCode() != 200) {
+                        this.logFailure("Leaderboard submit failed: HTTP " + response.statusCode());
+                        return SubmitResult.UNREACHABLE;
+                    }
+                    try {
+                        return this.decodeSubmit(JsonParser.parseString(response.body()));
+                    } catch (RuntimeException e) {
+                        this.logFailure("Leaderboard submit failed: " + describe(e));
+                        return SubmitResult.UNREACHABLE;
+                    }
+                });
+    }
+
+    private SubmitResult decodeSubmit(JsonElement json) {
+        if (!json.isJsonObject()) {
+            this.logFailure("Leaderboard submit failed: unexpected response");
+            return SubmitResult.UNREACHABLE;
+        }
+        JsonObject object = json.getAsJsonObject();
+        boolean accepted = object.has("accepted") && object.get("accepted").getAsBoolean();
+        int rank = object.has("rank") && object.get("rank").isJsonPrimitive() ? object.get("rank").getAsInt() : -1;
+        Optional<List<LeaderboardEntry>> leaderboard = object.has("leaderboard")
+                ? this.decodeEntries(object.get("leaderboard"))
+                : Optional.empty();
+        return new SubmitResult(true, accepted, rank, leaderboard);
+    }
+
+    private Optional<List<LeaderboardEntry>> decodeEntries(JsonElement json) {
+        return LeaderboardEntry.CODEC.listOf().parse(JsonOps.INSTANCE, json)
+                .resultOrPartial(error -> this.logFailure("Failed to decode leaderboard response: " + error));
+    }
+
+    private long logRequest(String label) {
+        TrainingDummyMod.LOGGER.info("Leaderboard request: {}", label);
+        return System.nanoTime();
+    }
+
+    private void logResult(String label, long startNanos, String outcome) {
+        TrainingDummyMod.LOGGER.info("Leaderboard response: {} -> {} ({} ms)", label, outcome,
+                (System.nanoTime() - startNanos) / 1_000_000L);
+    }
+
+    private static String describe(Throwable throwable) {
+        Throwable root = throwable;
+        while (root.getCause() != null && root.getCause() != root) {
+            root = root.getCause();
+        }
+        return root.getClass().getSimpleName() + (root.getMessage() != null ? ": " + root.getMessage() : "");
+    }
+
+    private void logFailure(String message) {
+        long now = System.currentTimeMillis();
+        long last = this.lastFailureLogMillis.get();
+        if (now - last >= FAILURE_LOG_INTERVAL_MILLIS && this.lastFailureLogMillis.compareAndSet(last, now)) {
+            int suppressed = this.suppressedFailures.getAndSet(0);
+            if (suppressed > 0) {
+                TrainingDummyMod.LOGGER.warn("{} ({} similar failures suppressed since the last warning)", message, suppressed);
+            } else {
+                TrainingDummyMod.LOGGER.warn(message);
             }
-            return true;
-        } catch (IOException e) {
-            TrainingDummyMod.LOGGER.error("Leaderboard submit failed", e);
-            return false;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return false;
+        } else {
+            this.suppressedFailures.incrementAndGet();
         }
     }
 }

@@ -12,8 +12,17 @@ public final class ClientPayloadHandler {
     }
 
     public static void handleOpenScoreboardScreen(OpenScoreboardScreenPayload payload, IPayloadContext context) {
-        context.enqueueWork(() -> Minecraft.getInstance().setScreen(new ScoreboardScreen(
-                payload.localEntries(), payload.globalEntries(), payload.globalAvailable(), payload.modpackDisplayName())));
+        context.enqueueWork(() -> {
+            Minecraft minecraft = Minecraft.getInstance();
+            if (payload.refresh()) {
+                if (minecraft.screen instanceof ScoreboardScreen screen) {
+                    screen.updateEntries(payload.localEntries(), payload.globalEntries());
+                }
+                return;
+            }
+            minecraft.setScreen(new ScoreboardScreen(
+                    payload.localEntries(), payload.globalEntries(), payload.globalState(), payload.modpackDisplayName()));
+        });
     }
 
     private ClientPayloadHandler() {
